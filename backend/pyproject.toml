@@ -1,0 +1,17 @@
+[project]
+name = "paprika"
+version = "0.1.0"
+description = "Backend for Paprika - simple VFX task tracker"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=6.0.6",
+    "environs>=15.0.1",
+    "pillow>=12.2.0",
+    "psycopg>=3.3.4",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.18",
+]
