@@ -1,0 +1,122 @@
+# ===============================
+# Operating System & System Files
+# ===============================
+*.bak
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+temp/
+tmp/
+
+# ==========================================
+# Python (Cache, Bytecode & Build Artifacts)
+# ==========================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.eggs/
+develop-eggs/
+build/
+dist/
+sdist/
+wheels/
+*.whl
+lib/
+lib64/
+parts/
+var/
+
+# =====================================
+# Python Tooling & Virtual Environments
+# =====================================
+.venv/
+venv/
+env/
+ENV/
+.python-version
+.uv/
+
+# =========================
+# Django Framework Specific
+# =========================
+local_settings.py
+db.sqlite3-journal
+media/
+media_root/
+staticfiles/
+static_collected/
+static_root/
+
+# ================
+# Databases & Logs
+# ================
+*.log
+*.sqlite3
+postgres_data/
+redis_data/
+
+# ===============================
+# Environment Variables & Secrets
+# ===============================
+.env
+*.env
+.env.*
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+secrets/
+certs/
+*.pem
+*.key
+!.env.example
+
+# ===============================
+# Testing, Linters & Code Quality
+# ===============================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+nox.ini
+tox.ini
+
+# ===================
+# IDEs & Text Editors
+# ===================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =====================
+# Docker Configurations
+# =====================
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.docker/
+
+# =========================
+# Automation & Task Runners
+# =========================
+Justfile
+justfile
+.justfile
+
+# ================
+# Git
+# ================
+.gitattributes
+.gitignore
