@@ -22,7 +22,7 @@ services:
       - media_data:/var/www/django/media
     env_file:
       - ./backend/.env.dev
-    command: python manage.py runserver 0.0.0.0:8000
+    command: uv run python manage.py runserver 0.0.0.0:8000
     depends_on:
       pg:
         condition: service_healthy
