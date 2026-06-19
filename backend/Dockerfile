@@ -49,7 +49,7 @@ RUN groupadd -g "${GID}" -r paprika \
 COPY --chown=paprika:paprika ./uv.lock ./pyproject.toml /app/
 
 RUN --mount=type=cache,target="$UV_CACHE_DIR" \
-  uv sync
+  uv sync --no-dev
 
 FROM base AS dev
 RUN --mount=type=cache,target="$UV_CACHE_DIR" \
