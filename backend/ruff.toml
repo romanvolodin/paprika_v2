@@ -29,7 +29,7 @@ exclude = [
 ]
 
 [lint]
-select = ["E", "W", "F", "I"]
+select = ["E", "W", "F", "I", "DJ", "B", "UP",]
 
 [lint.isort]
 section-order = [
