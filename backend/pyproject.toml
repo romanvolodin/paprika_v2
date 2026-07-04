@@ -16,3 +16,6 @@ dependencies = [
 dev = [
     "ruff>=0.15.18",
 ]
+
+[tool.uv]
+package = false
