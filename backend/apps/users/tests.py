@@ -31,6 +31,26 @@ class ModelTests(TestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
 
+    def test_create_user_without_password(self):
+        user = get_user_model().objects.create_user(email="nopass@email.com")
+        self.assertFalse(user.has_usable_password())
+
+    def test_create_superuser_requires_password(self):
+        with self.assertRaises(ValueError):
+            get_user_model().objects.create_superuser("admin@email.com", None)
+
+    def test_create_superuser_is_staff_false_raises(self):
+        with self.assertRaises(ValueError):
+            get_user_model().objects.create_superuser(
+                "admin@email.com", "Passwd123", is_staff=False
+            )
+
+    def test_create_superuser_is_superuser_false_raises(self):
+        with self.assertRaises(ValueError):
+            get_user_model().objects.create_superuser(
+                "admin@email.com", "Passwd123", is_superuser=False
+            )
+
 
 class AdminSiteTests(TestCase):
     def setUp(self):

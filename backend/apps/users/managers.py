@@ -9,15 +9,21 @@ class UserManager(BaseUserManager):
 
     use_in_migrations = True
 
-    def create_user(self, email, password, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         """
         Creates and saves a User with the given email and password.
+
+        If password is not provided, the user is created with an
+        unusable password (e.g. for invite-based or SSO registration flows).
         """
         if not email:
             raise ValueError(_("The Email must be set"))
         normalized_email = self.normalize_email(email)
         user = self.model(email=normalized_email, **extra_fields)
-        user.set_password(password)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 
@@ -32,5 +38,7 @@ class UserManager(BaseUserManager):
             raise ValueError(_("Superuser must have is_staff=True."))
         if extra_fields.get("is_superuser") is not True:
             raise ValueError(_("Superuser must have is_superuser=True."))
+        if not password:
+            raise ValueError(_("Superuser must have a password."))
 
         return self.create_user(email, password, **extra_fields)
