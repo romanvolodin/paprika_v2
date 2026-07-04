@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .managers import UserManager
+from .validators import validate_avatar_size
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -24,6 +25,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         validators=[
             FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif"]),
+            validate_avatar_size,
         ],
     )
     is_active = models.BooleanField(

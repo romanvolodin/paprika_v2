@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -101,3 +103,15 @@ class AdminSiteTests(TestCase):
         self.assertFormError(
             response.context["adminform"], "first_name", "Обязательное поле."
         )
+
+
+class AvatarValidationTests(TestCase):
+    def test_avatar_too_large_raises(self):
+        user = get_user_model()(email="bigavatar@email.com")
+        big_file = SimpleUploadedFile(
+            "avatar.png", b"0" * (3 * 1024 * 1024), content_type="image/png"
+        )
+        user.avatar = big_file
+
+        with self.assertRaises(ValidationError):
+            user.full_clean()
