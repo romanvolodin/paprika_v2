@@ -85,3 +85,19 @@ class AdminSiteTests(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
+
+    def test_create_user_page_requires_first_last_name(self):
+        url = reverse("admin:users_user_add")
+        response = self.client.post(
+            url,
+            {
+                "email": "new@email.com",
+                "password1": "Passwd123",
+                "password2": "Passwd123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(
+            response.context["adminform"], "first_name", "Обязательное поле."
+        )
