@@ -33,10 +33,8 @@ class CustomUserAdmin(UserAdmin):
     def get_avatar_preview(self, obj):
         if obj.avatar:
             return mark_safe(
-                (
-                    f'<img src="{obj.avatar.url}" style="width: 32px; height:32px;'
-                    'object-position: center; object-fit: cover; border-radius: 50%">'
-                )
+                f'<img src="{obj.avatar.url}" style="width: 32px; height:32px;'
+                'object-position: center; object-fit: cover; border-radius: 50%">'
             )
 
     fieldsets = (
