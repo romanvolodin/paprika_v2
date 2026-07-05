@@ -26,7 +26,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path(api_router.prefix, include((api_router.urls, "api"))),
     path(
-        "api/v1/docs/openapi.json/",
+        "api/v1/docs/openapi.json",
         OpenAPIJsonView.as_view(schema),
         name="openapi",
     ),
