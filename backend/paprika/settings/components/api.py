@@ -15,7 +15,7 @@ DMR_SETTINGS = {
             ),
             Tag(
                 name="Users",
-                description="Operations on the currently authenticated user.",
+                description="Managing user accounts.",
             ),
         ],
     ),
