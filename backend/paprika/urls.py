@@ -6,10 +6,14 @@ from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView, SwaggerView
 from dmr.routing import Router
 
+from apps.auth.api.urls import router as auth_router
 from apps.users.api.urls import router as users_router
 
 
-app_routers = (users_router,)
+app_routers = (
+    auth_router,
+    users_router,
+)
 
 api_router = Router(
     "api/v1/",
