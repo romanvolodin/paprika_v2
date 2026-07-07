@@ -1,6 +1,42 @@
 import datetime as dt
+import re
 
 import pydantic
+
+from apps.users.validators import AVATAR_ALLOWED_EXTENSIONS, AVATAR_MAX_SIZE_MB
+
+
+_AVATAR_EXTENSION_PATTERN = r"(?i)\.({})$".format(
+    "|".join(re.escape(ext) for ext in AVATAR_ALLOWED_EXTENSIONS),
+)
+
+
+class AvatarFileMetadata(pydantic.BaseModel):
+    """Validates an uploaded avatar's metadata before it touches the DB.
+
+    Mirrors the constraints already enforced by `User.avatar`'s own
+    validators (see `apps/users/validators.py`), just fails earlier with
+    a structured, per-field error instead of one flat message.
+    """
+
+    name: str = pydantic.Field(
+        pattern=_AVATAR_EXTENSION_PATTERN,
+        description=f"Allowed extensions: {', '.join(AVATAR_ALLOWED_EXTENSIONS)}.",
+    )
+    size: int = pydantic.Field(
+        le=AVATAR_MAX_SIZE_MB * 1024 * 1024,
+        description=f"Max {AVATAR_MAX_SIZE_MB} MB.",
+    )
+
+
+class UserAvatarFiles(pydantic.BaseModel):
+    """Files accepted alongside a user create/update payload.
+
+    `avatar` is optional: omit the field entirely to leave it untouched
+    (on update) or create the user without one (on create).
+    """
+
+    avatar: AvatarFileMetadata | None = None
 
 
 class UserOut(pydantic.BaseModel):
@@ -75,3 +111,10 @@ class UserUpdateIn(pydantic.BaseModel):
     first_name: str | None = pydantic.Field(default=None, min_length=1, max_length=150)
     last_name: str | None = pydantic.Field(default=None, min_length=1, max_length=150)
     is_active: bool | None = None
+    remove_avatar: bool = pydantic.Field(
+        default=False,
+        description=(
+            "Set to true to delete the current avatar. Ignored if a new "
+            "`avatar` file is also sent in the same request."
+        ),
+    )

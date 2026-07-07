@@ -2,15 +2,26 @@ from http import HTTPStatus
 
 from django.core.paginator import Paginator
 from django.db.models import Q
-from dmr import APIError, Body, Controller, Path, Query, ResponseSpec, modify
+from dmr import (
+    APIError,
+    Body,
+    Controller,
+    FileMetadata,
+    Path,
+    Query,
+    ResponseSpec,
+    modify,
+)
 from dmr.errors import ErrorType
-from dmr.plugins.pydantic import PydanticFastSerializer
+from dmr.parsers import MultiPartParser
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
 from apps.users.models import User
 
 from .schemas import (
+    UserAvatarFiles,
     UserCreateIn,
     UserListOut,
     UserListQuery,
@@ -43,6 +54,49 @@ def _get_user_or_404(user_id: int) -> User:
         ) from exc
 
 
+def _apply_avatar(user: User, files: UserAvatarFiles, request) -> None:
+    """Replace the user's avatar with the uploaded file, if any was sent.
+
+    `FileMetadata` (see `UserAvatarFiles`) already validated the file's
+    name/size before we get here, so this only has to move the already
+    validated `UploadedFile` from `request.FILES` onto the model and
+    clean up whatever avatar it's replacing.
+
+    Note: we intentionally don't call `old_avatar.delete()` here. Despite
+    being a separate Python object, `FieldFile.delete()` unconditionally
+    does `setattr(self.instance, self.field.attname, None)` - it resets
+    the field on the *model instance* regardless of which `FieldFile`
+    wrapper you call it on, even with `save=False`. Since `old_avatar`
+    and `user.avatar` share the same `instance`, calling delete on the
+    old one would silently wipe out the new avatar we just assigned. We
+    remove the old file straight from storage instead, which never
+    touches the instance.
+    """
+    if files.avatar is None:
+        return
+
+    old_name = user.avatar.name if user.avatar else None
+    old_storage = user.avatar.storage if user.avatar else None
+
+    user.avatar = request.FILES["avatar"]
+    user.save(update_fields=["avatar"])
+
+    if old_name:
+        old_storage.delete(old_name)
+
+
+def _clear_avatar(user: User) -> None:
+    """Remove the user's current avatar, if any."""
+    old_name = user.avatar.name if user.avatar else None
+    old_storage = user.avatar.storage if user.avatar else None
+
+    user.avatar = ""
+    user.save(update_fields=["avatar"])
+
+    if old_name:
+        old_storage.delete(old_name)
+
+
 class MeController(Controller[PydanticFastSerializer]):
     """`GET /api/v1/users/me/` - return the currently authenticated user."""
 
@@ -60,7 +114,7 @@ class MeController(Controller[PydanticFastSerializer]):
         return _serialize_user(self.request, self.request.user)
 
 
-class UserListController(Controller[PydanticFastSerializer]):
+class UserListController(Controller[PydanticSerializer]):
     """`GET/POST /api/v1/users/` - list and create users.
 
     Any authenticated user may list or create users; finer-grained
@@ -100,11 +154,15 @@ class UserListController(Controller[PydanticFastSerializer]):
         )
 
     @modify(
+        parsers=[MultiPartParser()],
         status_code=HTTPStatus.CREATED,
         summary="Create a user",
         description=(
-            "Create a new user account. If `password` is omitted, the "
-            "account is created with an unusable password."
+            "Create a new user account, optionally with an avatar. Send "
+            "as `multipart/form-data`: regular fields for `email`, "
+            "`password`, `first_name`, `last_name`, plus an optional "
+            "`avatar` file field. If `password` is omitted, the account "
+            "is created with an unusable password."
         ),
         response_description="The created user.",
         extra_responses=[
@@ -112,7 +170,11 @@ class UserListController(Controller[PydanticFastSerializer]):
         ],
         tags=["Users"],
     )
-    def post(self, parsed_body: Body[UserCreateIn]) -> UserOut:
+    def post(
+        self,
+        parsed_body: Body[UserCreateIn],
+        parsed_file_metadata: FileMetadata[UserAvatarFiles],
+    ) -> UserOut:
         if User.objects.filter(email__iexact=parsed_body.email).exists():
             raise APIError(
                 self.format_error(
@@ -129,10 +191,11 @@ class UserListController(Controller[PydanticFastSerializer]):
             first_name=parsed_body.first_name,
             last_name=parsed_body.last_name,
         )
+        _apply_avatar(user, parsed_file_metadata, self.request)
         return _serialize_user(self.request, user)
 
 
-class UserDetailController(Controller[PydanticFastSerializer]):
+class UserDetailController(Controller[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/users/<id>/` - manage a single user."""
 
     request: AuthenticatedHttpRequest[User]
@@ -152,8 +215,15 @@ class UserDetailController(Controller[PydanticFastSerializer]):
         return _serialize_user(self.request, user)
 
     @modify(
+        parsers=[MultiPartParser()],
         summary="Update a user",
-        description="Partially update a user. Only provided fields are changed.",
+        description=(
+            "Partially update a user, optionally replacing or removing "
+            "their avatar in the same request. Send as "
+            "`multipart/form-data`: any of `first_name`, `last_name`, "
+            "`is_active`, `remove_avatar`, plus an optional `avatar` "
+            "file field. Only fields actually present are changed."
+        ),
         response_description="The updated user.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -164,14 +234,23 @@ class UserDetailController(Controller[PydanticFastSerializer]):
         self,
         parsed_path: Path[UserPath],
         parsed_body: Body[UserUpdateIn],
+        parsed_file_metadata: FileMetadata[UserAvatarFiles],
     ) -> UserOut:
         user = _get_user_or_404(parsed_path.user_id)
 
-        update_fields = parsed_body.model_dump(exclude_unset=True)
+        update_fields = parsed_body.model_dump(
+            exclude={"remove_avatar"},
+            exclude_unset=True,
+        )
         for field, value in update_fields.items():
             setattr(user, field, value)
         if update_fields:
             user.save(update_fields=list(update_fields))
+
+        if parsed_file_metadata.avatar is not None:
+            _apply_avatar(user, parsed_file_metadata, self.request)
+        elif parsed_body.remove_avatar and user.avatar:
+            _clear_avatar(user)
 
         return _serialize_user(self.request, user)
 

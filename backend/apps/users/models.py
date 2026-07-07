@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .managers import UserManager
-from .validators import validate_avatar_size
+from .validators import AVATAR_ALLOWED_EXTENSIONS, validate_avatar_size
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -24,7 +24,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         upload_to="avatars",
         blank=True,
         validators=[
-            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "gif"]),
+            FileExtensionValidator(allowed_extensions=AVATAR_ALLOWED_EXTENSIONS),
             validate_avatar_size,
         ],
     )
