@@ -1,0 +1,12 @@
+"""
+Optional, per-developer settings overrides.
+
+This file is NOT read directly - copy it to `local.py` (gitignored) if you
+want to override anything for your own machine only, e.g. pointing
+`DATABASES` at a different host while debugging, or turning a setting on
+temporarily. Nobody else's setup depends on `local.py`, so feel free to
+make a mess in it.
+
+`local.py` is included last (see `paprika/settings/__init__.py`), after
+`common.py` and the environment file, so anything set here wins.
+"""

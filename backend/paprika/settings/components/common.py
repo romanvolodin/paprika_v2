@@ -8,7 +8,6 @@ env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = env.str("PAPRIKA_SECRET_KEY")
-DEBUG = env.bool("PAPRIKA_DEBUG", False)
 ALLOWED_HOSTS = env.list("PAPRIKA_ALLOWED_HOSTS", [])
 
 INSTALLED_APPS = [

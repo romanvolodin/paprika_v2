@@ -130,6 +130,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+paprika/settings/environments/local.py
 
 # Spyder project settings
 .spyderproject

@@ -4,7 +4,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
     env_file:
-      - ./backend/.env.dev
+      - ./backend/.env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -21,7 +21,11 @@ services:
       - ./backend:/app
       - media_data:/var/www/django/media
     env_file:
-      - ./backend/.env.dev
+      - ./backend/.env
+    environment:
+      # Explicit for clarity; this is also the default if unset - see
+      # `paprika/settings/__init__.py`.
+      DJANGO_ENV: development
     command: uv run python manage.py runserver 0.0.0.0:8000
     depends_on:
       pg:
