@@ -7,6 +7,8 @@ default:
 
 init-dev:
   @echo "{{ PURPLE }}Initializing dev environment...{{ RESET-COLOR }}"
+  @echo "{{ PURPLE }}Install pre-commit hook...{{ RESET-COLOR }}"
+  cd backend/ && uv run pre-commit install && cd ..
   @if [ ! -f backend/.env ]; then \
     echo "{{ PURPLE }}Creating backend/.env from template...{{ RESET-COLOR }}"; \
     cp backend/.env.template backend/.env; \
