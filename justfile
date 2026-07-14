@@ -30,3 +30,7 @@ migrate:
 
 superuser:
   docker compose -f compose.dev.yaml exec backend uv run manage.py createsuperuser
+
+test *ARGS:
+  docker compose -f compose.dev.yaml exec backend uv run pytest {{ARGS}}
+
