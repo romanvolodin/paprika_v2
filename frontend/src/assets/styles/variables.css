@@ -1,0 +1,75 @@
+/*
+ * Design tokens for Paprika.
+ *
+ * Palette reference: a dark grading-suite screen, lit mostly by the
+ * monitor itself, with a warm practical lamp glow as the one accent.
+ * Naive UI's own theme (see composables/useTheme.ts) is kept in sync
+ * with these so custom, non-Naive UI elements never look out of place
+ * next to Naive UI components.
+ */
+
+:root[data-theme='dark'] {
+  --color-bg: #121216;
+  --color-bg-elevated: #1b1b21;
+  --color-bg-hover: #232329;
+  --color-border: #2a2a32;
+  --color-border-strong: #38383f;
+
+  --color-text: #e8e8ec;
+  --color-text-secondary: #9a9aa6;
+  --color-text-tertiary: #6b6b74;
+
+  --color-accent: #e8a33d;
+  --color-accent-soft: rgba(232, 163, 61, 0.14);
+  --color-accent-text: #171208;
+
+  --color-status-blocked: #e5484d;
+  --color-status-progress: #e8a33d;
+  --color-status-done: #3dd68c;
+  --color-status-idle: #6b6b74;
+
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='light'] {
+  --color-bg: #f5f5f2;
+  --color-bg-elevated: #ffffff;
+  --color-bg-hover: #ececea;
+  --color-border: #ded9d0;
+  --color-border-strong: #c9c3b7;
+
+  --color-text: #1c1c1e;
+  --color-text-secondary: #5c5c63;
+  --color-text-tertiary: #86868c;
+
+  --color-accent: #c17d1e;
+  --color-accent-soft: rgba(193, 125, 30, 0.12);
+  --color-accent-text: #ffffff;
+
+  --color-status-blocked: #d4373c;
+  --color-status-progress: #c17d1e;
+  --color-status-done: #2ba873;
+  --color-status-idle: #96968f;
+
+  --shadow-elevated: 0 8px 24px rgba(28, 28, 30, 0.1);
+}
+
+:root {
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  --breakpoint-mobile: 640px;
+  --breakpoint-tablet: 1024px;
+
+  --transition-theme: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}

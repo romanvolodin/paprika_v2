@@ -34,3 +34,14 @@ superuser:
 test *ARGS:
   docker compose -f compose.dev.yaml exec backend uv run pytest {{ARGS}}
 
+# Regenerate frontend/src/api/schema.ts from the running backend's OpenAPI schema.
+generate-api-types:
+  docker compose -f compose.dev.yaml exec frontend npm run generate-api-types -- http://backend:8000/api/v1/docs/openapi.json
+
+frontend-test *ARGS:
+  docker compose -f compose.dev.yaml exec frontend npm run test {{ARGS}}
+
+frontend-lint:
+  docker compose -f compose.dev.yaml exec frontend npm run lint
+
+
