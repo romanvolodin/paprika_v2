@@ -1,0 +1,9 @@
+[project]
+name = "paprika-docs"
+version = "0.0.0"
+description = "Docs for Paprika - a simple VFX task tracker"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "zensical>=0.0.51",
+]
