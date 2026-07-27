@@ -19,7 +19,6 @@ services:
     init: true
     volumes:
       - ./backend:/app
-      - media_data:/var/www/django/media
     env_file:
       - ./backend/.env
     environment:
@@ -50,4 +49,3 @@ services:
 
 volumes:
   postgres_data:
-  media_data:
