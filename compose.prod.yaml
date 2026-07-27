@@ -1,0 +1,62 @@
+services:
+  pg:
+    image: postgres:18-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    env_file:
+      - ./backend/.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      target: prod
+    init: true
+    volumes:
+      - static_data:/var/lib/paprika/static
+      - media_data:/var/lib/paprika/media
+    env_file:
+      - ./backend/.env
+    environment:
+      DJANGO_ENV: production
+    command: >
+      sh -c "
+        uv run manage.py migrate --noinput &&
+        uv run manage.py collectstatic --noinput &&
+        uv run gunicorn paprika.wsgi:application --bind 0.0.0.0:8000 --workers 3
+      "
+    depends_on:
+      pg:
+        condition: service_healthy
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: .
+      dockerfile: caddy/Dockerfile
+    init: true
+    volumes:
+      - static_data:/var/lib/paprika/static:ro
+      - media_data:/var/lib/paprika/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file:
+      - ./backend/.env
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  media_data:
+  static_data:
+  caddy_data:
+  caddy_config:

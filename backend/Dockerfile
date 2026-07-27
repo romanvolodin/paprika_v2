@@ -41,8 +41,8 @@ RUN groupadd -g "${GID}" -r paprika \
   && useradd -d '/app' -g paprika -l -r -u "${UID}" paprika \
   && chown paprika:paprika -R '/app' \
   # Static and media files:
-  && mkdir -p '/var/www/django/static' '/var/www/django/media' \
-  && chown paprika:paprika '/var/www/django/static' '/var/www/django/media'
+  && mkdir -p '/var/lib/paprika/static' '/var/lib/paprika/media' \
+  && chown paprika:paprika '/var/lib/paprika/static' '/var/lib/paprika/media'
 
 COPY --chown=paprika:paprika ./uv.lock ./pyproject.toml /app/
 
@@ -54,3 +54,10 @@ RUN --mount=type=cache,target="$UV_CACHE_DIR" \
   uv sync --dev
 COPY . .
 CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+FROM base AS prod
+COPY --chown=paprika:paprika . .
+USER paprika
+EXPOSE 8000
+CMD ["uv", "run", "gunicorn", "paprika.wsgi:application", "--bind", "0.0.0.0:8000"]
+
