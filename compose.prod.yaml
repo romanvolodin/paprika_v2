@@ -26,9 +26,9 @@ services:
       DJANGO_ENV: production
     command: >
       sh -c "
-        uv run manage.py migrate --noinput &&
-        uv run manage.py collectstatic --noinput &&
-        uv run gunicorn paprika.wsgi:application --bind 0.0.0.0:8000 --workers 3
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput &&
+        gunicorn paprika.wsgi:application --bind 0.0.0.0:8000 --workers 3
       "
     depends_on:
       pg:
