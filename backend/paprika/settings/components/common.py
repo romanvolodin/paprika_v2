@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "dmr",
     "dmr.security.jwt.blocklist",
     #
+    "apps.core",
     "apps.users",
 ]
 
