@@ -14,6 +14,7 @@ from django.test import Client
 from django.test.client import BOUNDARY, encode_multipart
 import pytest
 
+from apps.companies.tests.factories import CompanyFactory, CompanyMembershipFactory
 from apps.users.tests.factories import DEFAULT_PASSWORD, UserFactory
 
 
@@ -78,6 +79,24 @@ def get_tokens(client):
         return response.json()
 
     return _get_tokens
+
+
+@pytest.fixture
+def company_factory():
+    """The `CompanyFactory` class itself, e.g. `company_factory(name=...)`."""
+    return CompanyFactory
+
+
+@pytest.fixture
+def company(company_factory):
+    """A single saved company with default field values."""
+    return company_factory()
+
+
+@pytest.fixture
+def company_membership_factory():
+    """The `CompanyMembershipFactory` class itself."""
+    return CompanyMembershipFactory
 
 
 @pytest.fixture
