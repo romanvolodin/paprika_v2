@@ -93,6 +93,9 @@ status:
   @if [ "{{MODE}}" = "" ]; then echo "Mode: not initialized"; else echo "{{PURPLE}}Mode: {{MODE}}{{RESET-COLOR}}"; fi
   @if [ "{{MODE}}" != "" ]; then docker compose -f {{COMPOSE-FILE}} ps; fi
 
+migrations *ARGS: _require-mode
+  docker compose -f {{COMPOSE-FILE}} exec backend {{MANAGE}} makemigrations {{ARGS}}
+
 migrate: _require-mode
   docker compose -f {{COMPOSE-FILE}} exec backend {{MANAGE}} migrate
 
