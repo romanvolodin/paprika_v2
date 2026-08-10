@@ -7,11 +7,13 @@ from dmr.openapi.views import OpenAPIJsonView, SwaggerView
 from dmr.routing import Router
 
 from apps.auth.api.urls import router as auth_router
+from apps.companies.api.urls import router as companies_router
 from apps.users.api.urls import router as users_router
 
 
 app_routers = (
     auth_router,
+    companies_router,
     users_router,
 )
 
