@@ -23,3 +23,18 @@ export type UserUpdateIn = components['schemas']['UserUpdateIn']
 export type UserListQuery = NonNullable<
   operations['getUserlistcontrollerApiV1Users']['parameters']['query']
 >
+
+export type CompanyOut = components['schemas']['CompanyOut']
+export type CompanyListOut = components['schemas']['CompanyListOut']
+export type CompanyCreateIn = components['schemas']['CompanyCreateIn']
+export type CompanyUpdateIn = components['schemas']['CompanyUpdateIn']
+
+export type CompanyListQuery = NonNullable<
+  operations['getCompanylistcontrollerApiV1Companies']['parameters']['query']
+>
+
+export type CompanyMemberOut = components['schemas']['CompanyMemberOut']
+export type CompanyMemberListOut = components['schemas']['CompanyMemberListOut']
+export type CompanyMemberCreateIn = components['schemas']['CompanyMemberCreateIn']
+export type CompanyMemberUpdateIn = components['schemas']['CompanyMemberUpdateIn']
+export type CompanyMembershipRole = components['schemas']['Role']

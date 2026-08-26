@@ -4,6 +4,7 @@ import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import { NIcon, type MenuOption } from 'naive-ui'
 import {
   PeopleOutline,
+  BusinessOutline,
   MoonOutline,
   SunnyOutline,
   MenuOutline,
@@ -42,9 +43,18 @@ const menuOptions: MenuOption[] = [
     key: 'users-list',
     icon: renderIcon(PeopleOutline),
   },
+  {
+    label: 'Компании',
+    key: 'company-list',
+    icon: renderIcon(BusinessOutline),
+  },
 ]
 
-const activeKey = computed(() => (route.name === 'users-list' ? 'users-list' : null))
+const activeKey = computed(() => {
+  if (route.name === 'users-list') return 'users-list'
+  if (route.name === 'company-list' || route.name === 'company-create') return 'company-list'
+  return null
+})
 
 function handleMenuSelect(key: string) {
   router.push({ name: key })

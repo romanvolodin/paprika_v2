@@ -42,6 +42,25 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/companies',
+      name: 'company-list',
+      component: () => import('@/views/CompaniesListView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/companies/new',
+      name: 'company-create',
+      component: () => import('@/views/CompanyFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/companies/:id(\\d+)',
+      name: 'company-detail',
+      component: () => import('@/views/CompanyDetailView.vue'),
+      props: (route) => ({ companyId: Number(route.params.id) }),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),

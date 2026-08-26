@@ -69,6 +69,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List companies
+         * @description Return a paginated list of companies the current user is a member of, optionally filtered by `search` against the name.
+         */
+        get: operations["getCompanylistcontrollerApiV1Companies"];
+        put?: never;
+        /**
+         * Create a company
+         * @description Create a new company. The creator is automatically added as an `admin` member.
+         */
+        post: operations["postCompanylistcontrollerApiV1Companies"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a company
+         * @description Return a single company by id.
+         */
+        get: operations["getCompanydetailcontrollerApiV1CompaniesCompanyId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a company
+         * @description Permanently delete a company and all its memberships.
+         */
+        delete: operations["deleteCompanydetailcontrollerApiV1CompaniesCompanyId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a company
+         * @description Partially update a company. Only fields present are changed.
+         */
+        patch: operations["patchCompanydetailcontrollerApiV1CompaniesCompanyId"];
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/members/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List company members
+         * @description Return every member of the company.
+         */
+        get: operations["getCompanymemberlistcontrollerApiV1CompaniesCompanyIdMembers"];
+        put?: never;
+        /**
+         * Add a company member
+         * @description Add an existing user to the company with the given role.
+         */
+        post: operations["postCompanymemberlistcontrollerApiV1CompaniesCompanyIdMembers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/members/{user_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a company member
+         * @description Remove a member from the company.
+         */
+        delete: operations["deleteCompanymemberdetailcontrollerApiV1CompaniesCompanyIdMembersUserId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a company member's role
+         * @description Change the role of an existing company member.
+         */
+        patch: operations["patchCompanymemberdetailcontrollerApiV1CompaniesCompanyIdMembersUserId"];
+        trace?: never;
+    };
     "/api/v1/users/": {
         parameters: {
             query?: never;
@@ -145,6 +245,126 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * CompanyCreateIn
+         * @description Payload for `POST /api/v1/companies/`.
+         */
+        CompanyCreateIn: {
+            /** Name */
+            name: string;
+            /**
+             * Slug
+             * @description URL-friendly identifier. If omitted, it's auto-derived from `name`.
+             */
+            slug?: string | null;
+        };
+        /**
+         * CompanyListOut
+         * @description A page of companies the current user belongs to.
+         */
+        CompanyListOut: {
+            /** Items */
+            items: components["schemas"]["CompanyOut"][];
+            /**
+             * Total
+             * @description Total number of companies matching filters.
+             */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /**
+         * CompanyMemberCreateIn
+         * @description Payload for `POST /api/v1/companies/<id>/members/`.
+         */
+        CompanyMemberCreateIn: {
+            /** User Id */
+            user_id: number;
+            role?: components["schemas"]["Role"];
+        };
+        /**
+         * CompanyMemberListOut
+         * @description The full list of a company's members (not paginated).
+         */
+        CompanyMemberListOut: {
+            /** Items */
+            items: components["schemas"]["CompanyMemberOut"][];
+        };
+        /**
+         * CompanyMemberOut
+         * @description Public representation of a company membership.
+         */
+        CompanyMemberOut: {
+            /**
+             * Id
+             * @description Internal numeric membership identifier.
+             */
+            id: number;
+            /** User Id */
+            user_id: number;
+            /** Email */
+            email: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            role: components["schemas"]["Role"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * CompanyMemberUpdateIn
+         * @description Payload for `PATCH /api/v1/companies/<id>/members/<user_id>/`.
+         */
+        CompanyMemberUpdateIn: {
+            role: components["schemas"]["Role"];
+        };
+        /**
+         * CompanyOut
+         * @description Public representation of a company.
+         */
+        CompanyOut: {
+            /**
+             * Id
+             * @description Internal numeric company identifier.
+             */
+            id: number;
+            /**
+             * Name
+             * @description Company name.
+             */
+            name: string;
+            /**
+             * Slug
+             * @description URL-friendly identifier for the company.
+             */
+            slug: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * CompanyUpdateIn
+         * @description Payload for `PATCH /api/v1/companies/<id>/`. All fields are optional.
+         */
+        CompanyUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Slug */
+            slug?: string | null;
+        };
         /**
          * ErrorDetail
          * @description Base schema for error details description.
@@ -223,6 +443,11 @@ export interface components {
              */
             refresh_token: string;
         };
+        /**
+         * Role
+         * @enum {string}
+         */
+        Role: "admin" | "producer" | "coordinator" | "executor" | "freelancer" | "client";
         /**
          * TokenPairResponse
          * @description A freshly issued pair of JWT tokens.
@@ -512,6 +737,645 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getCompanylistcontrollerApiV1Companies: {
+        parameters: {
+            query?: {
+                /** @description 1-indexed page number. */
+                page?: number;
+                /** @description Number of companies per page. */
+                page_size?: number;
+                /** @description Case-insensitive match against the company name. */
+                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of companies. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postCompanylistcontrollerApiV1Companies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/companies/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created company. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getCompanydetailcontrollerApiV1CompaniesCompanyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single company. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested company. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteCompanydetailcontrollerApiV1CompaniesCompanyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single company. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchCompanydetailcontrollerApiV1CompaniesCompanyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single company. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `PATCH /api/v1/companies/<id>/`. All fields are optional. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated company. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getCompanymemberlistcontrollerApiV1CompaniesCompanyIdMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single company. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The company's members. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyMemberListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postCompanymemberlistcontrollerApiV1CompaniesCompanyIdMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single company. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/companies/<id>/members/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyMemberCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created membership. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyMemberOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteCompanymemberdetailcontrollerApiV1CompaniesCompanyIdMembersUserId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single company member. */
+                company_id: number;
+                /** @description URL path parameters identifying a single company member. */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchCompanymemberdetailcontrollerApiV1CompaniesCompanyIdMembersUserId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single company member. */
+                company_id: number;
+                /** @description URL path parameters identifying a single company member. */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `PATCH /api/v1/companies/<id>/members/<user_id>/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyMemberUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated membership. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyMemberOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when provided `Accept` header cannot be satisfied */
