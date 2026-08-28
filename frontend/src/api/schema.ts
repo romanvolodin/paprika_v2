@@ -310,6 +310,11 @@ export interface components {
             first_name: string;
             /** Last Name */
             last_name: string;
+            /**
+             * Avatar
+             * @description Absolute URL of the member's avatar image, or null if none.
+             */
+            avatar?: string | null;
             role: components["schemas"]["Role"];
             /**
              * Created At

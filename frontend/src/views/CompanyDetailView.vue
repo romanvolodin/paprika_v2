@@ -139,8 +139,13 @@ const columns = computed<DataTableColumns<CompanyMemberOut>>(() => [
     render: (member) =>
       h(
         NAvatar,
-        { round: true, size: 32, style: { fontFamily: 'var(--font-mono)', fontSize: '12px' } },
-        { default: () => initials(member) },
+        {
+          round: true,
+          size: 32,
+          src: member.avatar ?? undefined,
+          style: { fontFamily: 'var(--font-mono)', fontSize: '12px' },
+        },
+        member.avatar ? undefined : { default: () => initials(member) },
       ),
   },
   {
@@ -203,11 +208,18 @@ function renderUserOption(option: SelectOption) {
   return h('div', { style: 'display: flex; align-items: center; gap: 8px;' }, [
     h(
       NAvatar,
-      { round: true, size: 24, style: { fontFamily: 'var(--font-mono)', fontSize: '10px' } },
       {
-        default: () =>
-          user ? `${user.first_name[0] ?? ''}${user.last_name[0] ?? ''}`.toUpperCase() : '',
+        round: true,
+        size: 24,
+        src: user?.avatar ?? undefined,
+        style: { fontFamily: 'var(--font-mono)', fontSize: '10px' },
       },
+      user?.avatar
+        ? undefined
+        : {
+            default: () =>
+              user ? `${user.first_name[0] ?? ''}${user.last_name[0] ?? ''}`.toUpperCase() : '',
+          },
     ),
     h('span', null, option.label as string),
   ])

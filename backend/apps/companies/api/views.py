@@ -35,13 +35,19 @@ def _serialize_company(company: Company) -> CompanyOut:
     )
 
 
-def _serialize_member(membership: CompanyMembership) -> CompanyMemberOut:
+def _serialize_member(request, membership: CompanyMembership) -> CompanyMemberOut:
+    avatar_url = (
+        request.build_absolute_uri(membership.user.avatar.url)
+        if membership.user.avatar
+        else None
+    )
     return CompanyMemberOut(
         id=membership.id,
         user_id=membership.user_id,
         email=membership.user.email,
         first_name=membership.user.first_name,
         last_name=membership.user.last_name,
+        avatar=avatar_url,
         role=CompanyMembership.Role(membership.role),
         created_at=membership.created_at,
     )
@@ -257,7 +263,10 @@ class CompanyMemberListController(Controller[PydanticSerializer]):
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
         memberships = company.memberships.select_related("user").order_by("user__email")
         return CompanyMemberListOut(
-            items=[_serialize_member(membership) for membership in memberships]
+            items=[
+                _serialize_member(self.request, membership)
+                for membership in memberships
+            ]
         )
 
     @modify(
@@ -296,7 +305,7 @@ class CompanyMemberListController(Controller[PydanticSerializer]):
             created_by=self.request.user,
             updated_by=self.request.user,
         )
-        return _serialize_member(membership)
+        return _serialize_member(self.request, membership)
 
 
 class CompanyMemberDetailController(Controller[PydanticSerializer]):
@@ -326,7 +335,7 @@ class CompanyMemberDetailController(Controller[PydanticSerializer]):
         membership.updated_by = self.request.user
         membership.save(update_fields=["role", "updated_by"])
 
-        return _serialize_member(membership)
+        return _serialize_member(self.request, membership)
 
     @modify(
         status_code=HTTPStatus.NO_CONTENT,

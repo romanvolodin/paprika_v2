@@ -1,12 +1,16 @@
 from http import HTTPStatus
 import json
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
 from apps.companies.models import CompanyMembership
 
 
 pytestmark = pytest.mark.django_db
+
+
+PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 100
 
 
 def _post_json(client, path, payload):
@@ -36,6 +40,42 @@ class TestListMembers:
         assert response.status_code == 200
         emails = {member["email"] for member in response.json()["items"]}
         assert emails == {auth_user.email, "other@example.com"}
+
+    def test_member_without_an_avatar_gets_null(
+        self,
+        auth_client,
+        auth_user,
+        company_factory,
+        company_membership_factory,
+    ):
+        company = company_factory()
+        company_membership_factory(user=auth_user, company=company)
+
+        response = auth_client.get(f"/api/v1/companies/{company.id}/members/")
+
+        [member] = response.json()["items"]
+        assert member["avatar"] is None
+
+    def test_member_with_an_avatar_gets_its_absolute_url(
+        self,
+        auth_client,
+        auth_user,
+        company_factory,
+        company_membership_factory,
+    ):
+        auth_user.avatar = SimpleUploadedFile(
+            "avatar.png", PNG_BYTES, content_type="image/png"
+        )
+        auth_user.save(update_fields=["avatar"])
+        company = company_factory()
+        company_membership_factory(user=auth_user, company=company)
+
+        response = auth_client.get(f"/api/v1/companies/{company.id}/members/")
+
+        [member] = response.json()["items"]
+        assert member["avatar"] is not None
+        assert member["avatar"].startswith("http")
+        assert auth_user.avatar.name.split("/")[-1] in member["avatar"]
 
     def test_non_member_gets_404(
         self, auth_client, company_factory, company_membership_factory

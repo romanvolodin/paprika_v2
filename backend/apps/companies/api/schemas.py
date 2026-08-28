@@ -76,6 +76,10 @@ class CompanyMemberOut(pydantic.BaseModel):
     email: str
     first_name: str
     last_name: str
+    avatar: str | None = pydantic.Field(
+        default=None,
+        description="Absolute URL of the member's avatar image, or null if none.",
+    )
     role: CompanyMembership.Role
     created_at: dt.datetime
 
