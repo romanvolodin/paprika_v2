@@ -13,6 +13,7 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import CompanySwitcher from '@/components/layout/CompanySwitcher.vue'
 
 const ui = useUiStore()
 const auth = useAuthStore()
@@ -80,22 +81,30 @@ async function handleLogout() {
       @collapse="ui.sidebarCollapsed = true"
       @expand="ui.sidebarCollapsed = false"
     >
-      <div class="brand" :class="{ 'brand--collapsed': ui.sidebarCollapsed }">
-        <span class="brand__mark">P</span>
-        <span v-if="!ui.sidebarCollapsed" class="brand__name">Paprika</span>
+      <div class="sider-content">
+        <div class="sider-content__scroll">
+          <div class="brand" :class="{ 'brand--collapsed': ui.sidebarCollapsed }">
+            <span class="brand__mark">P</span>
+            <span v-if="!ui.sidebarCollapsed" class="brand__name">Paprika</span>
+          </div>
+          <n-menu
+            :collapsed="ui.sidebarCollapsed"
+            :collapsed-width="64"
+            :options="menuOptions"
+            :value="activeKey"
+            @update:value="handleMenuSelect"
+          />
+        </div>
+        <company-switcher :collapsed="ui.sidebarCollapsed" />
       </div>
-      <n-menu
-        :collapsed="ui.sidebarCollapsed"
-        :collapsed-width="64"
-        :options="menuOptions"
-        :value="activeKey"
-        @update:value="handleMenuSelect"
-      />
     </n-layout-sider>
 
     <n-drawer v-else v-model:show="mobileDrawerOpen" placement="left" :width="240">
       <n-drawer-content title="Paprika" closable>
         <n-menu :options="menuOptions" :value="activeKey" @update:value="handleMenuSelect" />
+        <template #footer>
+          <company-switcher />
+        </template>
       </n-drawer-content>
     </n-drawer>
 
@@ -140,6 +149,17 @@ async function handleLogout() {
 </template>
 
 <style scoped>
+.sider-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sider-content__scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
 .brand {
   display: flex;
   align-items: center;

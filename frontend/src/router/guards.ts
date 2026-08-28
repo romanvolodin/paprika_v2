@@ -1,5 +1,6 @@
 import type { Router } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCurrentCompanyStore } from '@/stores/currentCompany'
 
 export function setupAuthGuard(router: Router) {
   router.beforeEach(async (to) => {
@@ -18,6 +19,13 @@ export function setupAuthGuard(router: Router) {
 
     if (to.name === 'login' && auth.isAuthenticated) {
       return { name: 'users-list' }
+    }
+
+    if (auth.isAuthenticated) {
+      const currentCompany = useCurrentCompanyStore()
+      if (!currentCompany.isInitialized) {
+        await currentCompany.initialize()
+      }
     }
 
     return true

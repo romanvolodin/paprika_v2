@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import * as authApi from '@/api/auth'
 import { getMe } from '@/api/users'
+import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import type { UserOut } from '@/types/api'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -28,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = null
     refreshToken.value = null
     currentUser.value = null
+    useCurrentCompanyStore().reset()
   }
 
   async function login(email: string, password: string) {
