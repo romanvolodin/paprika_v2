@@ -12,11 +12,12 @@ import type { SelectOption } from 'naive-ui'
  * mapping function; this composable is written and tested once.
  *
  * Usage:
- *   const { options, loading, search } = useRemoteSearchOptions(
+ *   const { options, loading, search, loadInitial } = useRemoteSearchOptions(
  *     (query) => listUsers({ search: query }).then((r) => r.items),
  *     (user) => ({ value: user.id, label: `${user.first_name} ${user.last_name}` }),
  *   )
- *   <n-select filterable remote :loading="loading" :options="options" @search="search" />
+ *   <n-select filterable remote :loading="loading" :options="options"
+ *     @search="search" @focus="loadInitial" />
  */
 export function useRemoteSearchOptions<T>(
   fetcher: (query: string) => Promise<T[]>,
@@ -26,7 +27,7 @@ export function useRemoteSearchOptions<T>(
   const options = ref<SelectOption[]>([])
   const loading = ref(false)
 
-  const debouncedFetch = useDebounceFn(async (query: string) => {
+  async function runFetch(query: string) {
     loading.value = true
     try {
       const items = await fetcher(query)
@@ -37,7 +38,9 @@ export function useRemoteSearchOptions<T>(
     } finally {
       loading.value = false
     }
-  }, debounceMs)
+  }
+
+  const debouncedFetch = useDebounceFn(runFetch, debounceMs)
 
   function search(query: string) {
     if (!query) {
@@ -47,5 +50,19 @@ export function useRemoteSearchOptions<T>(
     debouncedFetch(query)
   }
 
-  return { options, loading, search }
+  /**
+   * Load an unfiltered first page as soon as the select is opened, before
+   * anything is typed. Without this, a freshly opened remote select shows
+   * a bare empty dropdown with no hint that typing would help - it reads
+   * as broken rather than as "type to search". Not debounced (it's a
+   * one-off on open, not a keystroke), and skipped if there's already
+   * something to show (e.g. from a previous search).
+   */
+  function loadInitial() {
+    if (options.value.length === 0) {
+      runFetch('')
+    }
+  }
+
+  return { options, loading, search, loadInitial }
 }

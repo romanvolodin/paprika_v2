@@ -85,4 +85,35 @@ describe('useRemoteSearchOptions', () => {
     expect(loading.value).toBe(false)
     expect(options.value).toEqual([])
   })
+
+  it('loadInitial fetches an unfiltered first page immediately, without debouncing', async () => {
+    const fetcher = vi.fn().mockResolvedValue([{ id: 1, name: 'Acme' }])
+    const { options, loadInitial } = useRemoteSearchOptions(fetcher, (item: Item) => ({
+      value: item.id,
+      label: item.name,
+    }))
+
+    loadInitial()
+
+    expect(fetcher).toHaveBeenCalledWith('')
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(options.value).toEqual([{ value: 1, label: 'Acme' }])
+  })
+
+  it('loadInitial does nothing if options are already populated', async () => {
+    const fetcher = vi.fn().mockResolvedValue([{ id: 1, name: 'Acme' }])
+    const { search, loadInitial } = useRemoteSearchOptions(fetcher, (item: Item) => ({
+      value: item.id,
+      label: item.name,
+    }))
+
+    search('acme')
+    await vi.advanceTimersByTimeAsync(300)
+    expect(fetcher).toHaveBeenCalledTimes(1)
+
+    loadInitial()
+
+    expect(fetcher).toHaveBeenCalledTimes(1)
+  })
 })

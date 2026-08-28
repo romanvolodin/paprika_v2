@@ -291,6 +291,7 @@ async function handleAddMember() {
           :options="userSearch.options.value"
           :render-label="renderUserOption"
           @search="userSearch.search"
+          @focus="userSearch.loadInitial"
         />
         <n-select
           v-model:value="newMemberRole"
