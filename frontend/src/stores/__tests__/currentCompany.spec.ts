@@ -126,4 +126,31 @@ describe('useCurrentCompanyStore', () => {
     expect(store.isInitialized).toBe(false)
     expect(localStorage.getItem('paprika:current-company-id')).toBeNull()
   })
+
+  it('refreshCompanies picks up a newly created company without touching an existing selection', async () => {
+    mockCompanies([buildCompany({ id: 1 })])
+    const store = useCurrentCompanyStore()
+    await store.initialize()
+    expect(store.currentCompanyId).toBe(1)
+
+    mockCompanies([buildCompany({ id: 1 }), buildCompany({ id: 2, name: 'New Studio' })])
+    await store.refreshCompanies()
+
+    expect(store.companies).toHaveLength(2)
+    expect(store.currentCompanyId).toBe(1)
+    expect(store.needsSelection).toBe(false)
+  })
+
+  it('refreshCompanies auto-selects a first company created from zero', async () => {
+    mockCompanies([])
+    const store = useCurrentCompanyStore()
+    await store.initialize()
+    expect(store.currentCompanyId).toBeNull()
+
+    mockCompanies([buildCompany({ id: 3, name: 'First Studio' })])
+    await store.refreshCompanies()
+
+    expect(store.currentCompanyId).toBe(3)
+    expect(store.currentCompany?.name).toBe('First Studio')
+  })
 })

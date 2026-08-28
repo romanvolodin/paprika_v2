@@ -12,10 +12,12 @@ import {
 } from 'naive-ui'
 import { ArrowBackOutline } from '@vicons/ionicons5'
 import * as companiesApi from '@/api/companies'
+import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import { slugify } from '@/utils/slugify'
 
 const router = useRouter()
 const message = useMessage()
+const currentCompany = useCurrentCompanyStore()
 
 const formRef = ref<FormInst | null>(null)
 const isSaving = ref(false)
@@ -57,6 +59,7 @@ async function handleSubmit() {
       name: name.value,
       slug: slug.value || null,
     })
+    await currentCompany.refreshCompanies()
     message.success('Компания создана.')
     router.push({ name: 'company-list' })
   } catch {

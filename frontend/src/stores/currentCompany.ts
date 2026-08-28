@@ -35,6 +35,13 @@ export const useCurrentCompanyStore = defineStore('currentCompany', () => {
     }
   }
 
+  function resolveSelection() {
+    const storedIsValid = companies.value.some((company) => company.id === currentCompanyId.value)
+    if (!storedIsValid) {
+      storedId.value = companies.value.length === 1 ? String(companies.value[0].id) : null
+    }
+  }
+
   /**
    * Load the user's companies and resolve which one is active.
    *
@@ -46,13 +53,13 @@ export const useCurrentCompanyStore = defineStore('currentCompany', () => {
    */
   async function initialize() {
     await loadCompanies()
-
-    const storedIsValid = companies.value.some((company) => company.id === currentCompanyId.value)
-    if (!storedIsValid) {
-      storedId.value = companies.value.length === 1 ? String(companies.value[0].id) : null
-    }
-
+    resolveSelection()
     isInitialized.value = true
+  }
+
+  async function refreshCompanies() {
+    await loadCompanies()
+    resolveSelection()
   }
 
   function selectCompany(companyId: number) {
@@ -73,6 +80,8 @@ export const useCurrentCompanyStore = defineStore('currentCompany', () => {
     isInitialized,
     needsSelection,
     initialize,
+    loadCompanies,
+    refreshCompanies,
     selectCompany,
     reset,
   }
