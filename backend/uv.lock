@@ -194,21 +194,21 @@ wheels = [
 
 [[package]]
 name = "django-modern-rest"
-version = "0.12.1"
+version = "0.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/04/e599f9bd20298c2e2d4eff1755d49dcc4ffcdf9b6b610955ea4ccdb847f6/django_modern_rest-0.12.1.tar.gz", hash = "sha256:ea6842acdb86b7587ae9a2c5508f9e7c2d9ca520fb81324a32a8e534454d0eb9", size = 2821975, upload-time = "2026-07-31T21:39:20.188Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/e4/f682a2d4770776c16ac7ffa34aae523e7e770138020e96f131ce9f678345/django_modern_rest-0.15.0.tar.gz", hash = "sha256:b2d536aca39cbe7a201712c4a2eb2a47b0d5e1b77bcfb8f0158a950cdccc88f8", size = 2853541, upload-time = "2026-09-11T18:13:12.369Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/89/0f23ab0ab9a9643cf3e9ee0d27f96f92e5f32f1625f0b93ba90d83cdd90c/django_modern_rest-0.12.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:efac39e5354869672ad0e5039f6085aa1f19442c1f517349d7e41c74e48cecfe", size = 3015857, upload-time = "2026-07-31T21:39:51.416Z" },
-    { url = "https://files.pythonhosted.org/packages/f9/da/7fdee1018273812f540290eb315c3df20aac0a826e308a725875cbf10729/django_modern_rest-0.12.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:46529d3512e3cca915f0e1421f4a48772932bddb69144f896273f51445d46fe9", size = 3028195, upload-time = "2026-07-31T21:39:53.017Z" },
-    { url = "https://files.pythonhosted.org/packages/23/3b/3a9f139490b1058ac19b4f1a304e4b1d26e1c323cba90aca280a3dd0dca6/django_modern_rest-0.12.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:629862974a202d21ffd644fcff79dbe094de711a711edcd76796c4de6e88947b", size = 3029965, upload-time = "2026-07-31T21:39:54.619Z" },
-    { url = "https://files.pythonhosted.org/packages/58/41/664c644ad46239092436c7e7fb727e3a3116e77b23ed67230ccb7d47196c/django_modern_rest-0.12.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:79bae3c3547d338141c693658a2e2391e2447eea5a1f68a820c33aa8755cb1b3", size = 3030373, upload-time = "2026-07-31T21:39:56.186Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/a4/f558b0ac156269e106df1d2ae191e78605b61ed606929bacbdf143c8211c/django_modern_rest-0.12.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:e8faa9c7757cf95d54d5ee2819b2052c8efbcaad3c99b461c407ddbdd6abaf27", size = 3032757, upload-time = "2026-07-31T21:39:57.582Z" },
-    { url = "https://files.pythonhosted.org/packages/f5/90/d6671e8562ce5da58b17227351bdb96ca35a4bb47998bd45732e0c3b05aa/django_modern_rest-0.12.1-cp314-cp314-win_amd64.whl", hash = "sha256:8c42ecfbf8af85716e6898a3761c0fa2954e6325b2076b84d3bdd4bf642858b2", size = 3023620, upload-time = "2026-07-31T21:39:59.241Z" },
-    { url = "https://files.pythonhosted.org/packages/e3/c8/2ec97ffedb265e4fc11c3d1a79552c7fa59ec878da18275b38a0a2ab8b16/django_modern_rest-0.12.1-py3-none-any.whl", hash = "sha256:ffb75e2991033c354e69c0afa667379ce2c77742a60a93772df5563e550d65d9", size = 2942935, upload-time = "2026-07-31T21:39:18.036Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/3f/609dcc6d9bb36a2f4dbbcf7d7af3b0af63d1c91129746c2a72cef291def1/django_modern_rest-0.15.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:38d762fb26e483500f12cc76d331011eea0c24e3cbc3067c3d179dba89c134c6", size = 3056421, upload-time = "2026-09-11T18:13:54.27Z" },
+    { url = "https://files.pythonhosted.org/packages/61/25/f6c2ab075723cdc4dfa8d84c2491ce2c1bc6fe5c1b490bccde7eabbd4a8f/django_modern_rest-0.15.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f4652c00cd872e9b7db9c48e943847245e388783a6286a748fc471c39a4f9fd5", size = 3068446, upload-time = "2026-09-11T18:13:55.815Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/f8/1d2554538286db83a69f01733104ec6264106786f84bc24eff95f83d76b9/django_modern_rest-0.15.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2710b112b8c6ffb65fa8d663377ce0d0cb03774e76a983d875d9cc0475bd9977", size = 3070109, upload-time = "2026-09-11T18:13:57.419Z" },
+    { url = "https://files.pythonhosted.org/packages/45/00/5370395e0a7a0b184e38ed1b69137c76f37a01150067c0d154d5058ea788/django_modern_rest-0.15.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:991db3a2f559c7e90b4691d33ea221a929c4ed0e2190a9de875af4a938f3fdb3", size = 3070639, upload-time = "2026-09-11T18:13:58.93Z" },
+    { url = "https://files.pythonhosted.org/packages/39/b4/bfb2e73615ec758df659758eecc5a7cd1a68a8e7dbfca62d57aee8538793/django_modern_rest-0.15.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:98da3e3dbf1f14adb378bf861ed5f76ee9c37761accb516385f9830af93a72ed", size = 3072981, upload-time = "2026-09-11T18:14:00.471Z" },
+    { url = "https://files.pythonhosted.org/packages/28/bf/7dbced550fed87e83d8b4d698bb8e7b47b11515cf6f1efc644d0ad25970c/django_modern_rest-0.15.0-cp314-cp314-win_amd64.whl", hash = "sha256:db786def1f60539013f3141d4bf77df73816cfb5a9813c9ffdf97e4133d1fdaa", size = 3063205, upload-time = "2026-09-11T18:14:02.153Z" },
+    { url = "https://files.pythonhosted.org/packages/13/45/e07f88724481509e4efc80b448a14fe42152bc4d5d1c12f54e4ea018cef8/django_modern_rest-0.15.0-py3-none-any.whl", hash = "sha256:eeb43e6d5090e29809c80ae83f394882b110ec883b947f3a377f699fb7d9e4d3", size = 2981256, upload-time = "2026-09-11T18:13:10.665Z" },
 ]
 
 [package.optional-dependencies]
@@ -514,7 +514,7 @@ dev = [
 requires-dist = [
     { name = "django", specifier = ">=6.0.7" },
     { name = "django-cors-headers", specifier = ">=4.9.0" },
-    { name = "django-modern-rest", extras = ["jwt", "msgspec", "openapi", "pydantic"], specifier = ">=0.12.1" },
+    { name = "django-modern-rest", extras = ["jwt", "msgspec", "openapi", "pydantic"], specifier = ">=0.15.0" },
     { name = "django-split-settings", specifier = ">=1.3.2" },
     { name = "environs", specifier = ">=15.1.0" },
     { name = "gunicorn", specifier = ">=26.0.0" },
