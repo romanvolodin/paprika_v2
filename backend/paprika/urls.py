@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import path
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView, SwaggerView
 from dmr.routing import Router
@@ -11,22 +11,16 @@ from apps.companies.api.urls import router as companies_router
 from apps.users.api.urls import router as users_router
 
 
-app_routers = (
-    auth_router,
-    companies_router,
-    users_router,
-)
-
-api_router = Router(
-    "api/v1/",
-    [url for app_router in app_routers for url in app_router.urls],
-)
+api_router = Router("api/v1/")
+api_router.include(auth_router)
+api_router.include(companies_router)
+api_router.include(users_router)
 
 schema = build_schema(api_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path(api_router.prefix, include((api_router.urls, "api"))),
+    api_router.to_urlpatterns(namespace="api"),
     path(
         "api/v1/docs/openapi.json",
         OpenAPIJsonView.as_view(schema),
