@@ -104,6 +104,7 @@ class LoginController(
 
 
 class RefreshController(
+    JWTokenBlocklistSyncMixin,
     RefreshTokenSyncController[
         PydanticFastSerializer,
         RefreshPayload,
@@ -119,28 +120,6 @@ class RefreshController(
     @override
     def make_api_response(self) -> TokenPairResponse:
         return _make_token_pair(self)
-
-    @override
-    def refresh(self, parsed_body: RefreshPayload) -> TokenPairResponse:
-        # `RefreshTokenSyncController` does not check the blocklist for
-        # refresh tokens by default, only `AccessTokenBlocklistAuth` does
-        # that for access tokens. We decode the token ourselves first so a
-        # revoked (e.g. logged-out) refresh token can't mint new tokens.
-        token = JWToken.decode(
-            self.convert_refresh_payload(parsed_body),
-            secret=self.jwt_secret or settings.SECRET_KEY,
-            algorithm=self.jwt_algorithm,
-        )
-        is_revoked = (
-            access_token_auth.blocklist_model()
-            .objects.filter(
-                jti=token.jti,
-            )
-            .exists()
-        )
-        if is_revoked:
-            raise NotAuthenticatedError("Token has been revoked.")
-        return super().refresh(parsed_body)
 
     @modify(
         status_code=HTTPStatus.OK,
