@@ -10,7 +10,6 @@ import json
 import shutil
 import tempfile
 
-from django.test import Client
 from django.test.client import BOUNDARY, encode_multipart
 import pytest
 
@@ -62,14 +61,17 @@ def user(user_factory):
 
 
 @pytest.fixture
-def get_tokens(client):
+def log_in(client):
     """Log in via the real `/api/v1/auth/login/` endpoint.
 
-    Returns a callable so tests can request tokens for whichever
-    email/password pair they need, e.g. after registering a second user.
+    Returns a callable so tests can log in as whichever email/password
+    pair they need, e.g. after registering a second user. Tokens are
+    never handled directly - a successful login sets them as cookies on
+    `client`, which Django's test `Client` then resends automatically on
+    every later request from the same fixture instance.
     """
 
-    def _get_tokens(email: str, password: str) -> dict:
+    def _log_in(email: str, password: str) -> dict:
         response = client.post(
             "/api/v1/auth/login/",
             data=json.dumps({"email": email, "password": password}),
@@ -78,7 +80,7 @@ def get_tokens(client):
         assert response.status_code == 200, response.content
         return response.json()
 
-    return _get_tokens
+    return _log_in
 
 
 @pytest.fixture
@@ -106,17 +108,17 @@ def auth_user(user_factory):
 
 
 @pytest.fixture
-def auth_client(auth_user, get_tokens):
-    """A Django test client authenticated as `auth_user` with a real access token.
+def auth_client(auth_user, log_in, client):
+    """A Django test client authenticated as `auth_user` via real cookies.
 
-    Obtained through an actual `POST /api/v1/auth/login/` call (not minted by
-    hand), so these tests exercise the exact same code path a real client
-    would use.
+    Obtained through an actual `POST /api/v1/auth/login/` call (not minted
+    by hand), so these tests exercise the exact same code path a real
+    client would use. The returned client is the same object `log_in`
+    used, so the access/refresh cookies set by that call are already
+    attached and are resent automatically on every further request.
     """
-    tokens = get_tokens(auth_user.email, DEFAULT_PASSWORD)
-    authed_client = Client()
-    authed_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {tokens['access_token']}"
-    return authed_client
+    log_in(auth_user.email, DEFAULT_PASSWORD)
+    return client
 
 
 @pytest.fixture

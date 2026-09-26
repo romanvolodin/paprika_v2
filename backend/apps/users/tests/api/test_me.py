@@ -22,10 +22,9 @@ class TestGetMe:
 
         assert response.status_code == 401
 
-    def test_rejects_a_garbage_token(self, client):
-        response = client.get(
-            "/api/v1/users/me/",
-            HTTP_AUTHORIZATION="Bearer not-a-real-jwt",
-        )
+    def test_rejects_a_garbage_access_cookie(self, client):
+        client.cookies["access_token"] = "not-a-real-jwt"
+
+        response = client.get("/api/v1/users/me/")
 
         assert response.status_code == 401

@@ -17,21 +17,32 @@ def _login(client, **payload):
 
 
 class TestLoginSuccess:
-    def test_returns_access_and_refresh_tokens(self, client, auth_user):
+    def test_returns_the_authenticated_user(self, client, auth_user):
         response = _login(client, email=auth_user.email, password=DEFAULT_PASSWORD)
 
         assert response.status_code == 200
         body = response.json()
-        assert "access_token" in body
-        assert "refresh_token" in body
+        assert body["email"] == auth_user.email
+        assert body["id"] == auth_user.id
 
-    def test_access_token_can_be_used_on_protected_endpoint(self, client, auth_user):
-        tokens = _login(client, email=auth_user.email, password=DEFAULT_PASSWORD).json()
+    def test_sets_httponly_access_and_refresh_cookies(self, client, auth_user):
+        response = _login(client, email=auth_user.email, password=DEFAULT_PASSWORD)
 
-        response = client.get(
-            "/api/v1/users/me/",
-            HTTP_AUTHORIZATION=f"Bearer {tokens['access_token']}",
-        )
+        access_cookie = response.cookies["access_token"]
+        refresh_cookie = response.cookies["refresh_token"]
+        assert access_cookie.value
+        assert refresh_cookie.value
+        assert access_cookie["httponly"]
+        assert refresh_cookie["httponly"]
+        # Scoped to the refresh endpoint only, so it isn't sent anywhere else.
+        assert refresh_cookie["path"] == "/api/v1/auth/refresh/"
+
+    def test_access_cookie_can_be_used_on_protected_endpoint(self, client, auth_user):
+        _login(client, email=auth_user.email, password=DEFAULT_PASSWORD)
+
+        # The test client resends cookies from the previous response
+        # automatically - no header to attach by hand anymore.
+        response = client.get("/api/v1/users/me/")
 
         assert response.status_code == 200
         assert response.json()["email"] == auth_user.email
