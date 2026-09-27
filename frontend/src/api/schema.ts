@@ -15,10 +15,10 @@ export interface paths {
         put?: never;
         /**
          * Log in
-         * @description Authenticate with an email and password and receive a new pair of JWT tokens.
+         * @description Authenticate with an email and password. On success, the access and refresh tokens are set as `httponly` cookies - they are never exposed to the response body or to JavaScript - and the authenticated user is returned.
          *
-         *     - The **access token** is short-lived and must be sent as `Authorization: Bearer <access_token>` on protected endpoints.
-         *     - The **refresh token** is long-lived and can be exchanged for a new pair at `POST /api/v1/auth/refresh/`.
+         *     - The **access token** cookie is sent with every API request and is short-lived.
+         *     - The **refresh token** cookie is only sent to `POST /api/v1/auth/refresh/` and is long-lived.
          */
         post: operations["postLogincontrollerApiV1AuthLogin"];
         delete?: never;
@@ -38,9 +38,7 @@ export interface paths {
         put?: never;
         /**
          * Log out
-         * @description Revoke the access token used to authenticate this request, so it can no longer be used, even if it has not expired yet.
-         *
-         *     Optionally pass the paired **refresh token** in the body to revoke it too and fully close the session; otherwise it stays valid until it expires naturally.
+         * @description Revoke the access token used to authenticate this request, so it can no longer be used even if it has not expired yet, and drop both token cookies. The refresh token is not revoked server-side - it is only dropped client-side - and stays valid until it expires naturally.
          */
         post: operations["postLogoutcontrollerApiV1AuthLogout"];
         delete?: never;
@@ -60,7 +58,7 @@ export interface paths {
         put?: never;
         /**
          * Refresh tokens
-         * @description Exchange a valid, non-revoked refresh token for a brand new access/refresh token pair, without sending the user's password again.
+         * @description Exchange a valid, non-revoked refresh cookie for a brand new pair of cookies, without sending the user's password again. There is no request body: the browser sends the refresh cookie on its own.
          */
         post: operations["postRefreshcontrollerApiV1AuthRefresh"];
         delete?: never;
@@ -412,63 +410,10 @@ export interface components {
             password: string;
         };
         /**
-         * LogoutPayload
-         * @description Optional payload for logging out.
-         *
-         *     If a refresh token is provided, it is blocklisted together with the
-         *     access token used to authenticate this request, so it can no longer
-         *     be used to mint new token pairs either.
-         */
-        LogoutPayload: {
-            /**
-             * Refresh Token
-             * @description Refresh token issued alongside the access token used for this request. If provided, it is revoked too, fully closing this session.
-             */
-            refresh_token?: string | null;
-        };
-        /**
-         * MessageResponse
-         * @description A simple textual confirmation message.
-         */
-        MessageResponse: {
-            /**
-             * Detail
-             * @description Human-readable result message.
-             */
-            detail: string;
-        };
-        /**
-         * RefreshPayload
-         * @description A refresh token used to obtain a new token pair without re-authenticating.
-         */
-        RefreshPayload: {
-            /**
-             * Refresh Token
-             * @description A valid, non-expired, non-revoked refresh token.
-             */
-            refresh_token: string;
-        };
-        /**
          * Role
          * @enum {string}
          */
         Role: "admin" | "producer" | "coordinator" | "executor" | "freelancer" | "client";
-        /**
-         * TokenPairResponse
-         * @description A freshly issued pair of JWT tokens.
-         */
-        TokenPairResponse: {
-            /**
-             * Access Token
-             * @description Short-lived JWT. Send it as `Authorization: Bearer <access_token>` on protected endpoints.
-             */
-            access_token: string;
-            /**
-             * Refresh Token
-             * @description Long-lived JWT. Exchange it for a new token pair at `POST /api/v1/auth/refresh/`.
-             */
-            refresh_token: string;
-        };
         /**
          * UserCreateIn
          * @description Payload for `POST /api/v1/users/`.
@@ -589,13 +534,21 @@ export interface operations {
             };
         };
         responses: {
-            /** @description A new access/refresh token pair. */
+            /** @description The now-authenticated user. */
             200: {
                 headers: {
+                    /** @description Credentials must not be stored in any cache. */
+                    "Cache-Control": string;
+                    /** @description Access token, sent with every API request. */
+                    "Set-Cookie: access_token": string;
+                    /** @description Refresh token, only sent to the refresh endpoint. */
+                    "Set-Cookie: refresh_token": string;
+                    /** @description CSRF protection. */
+                    "Set-Cookie: csrftoken": string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenPairResponse"];
+                    "application/json": components["schemas"]["UserOut"];
                 };
             };
             /** @description Raised when request components cannot be parsed */
@@ -643,30 +596,25 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /**
-         * @description Optional payload for logging out.
-         *
-         *     If a refresh token is provided, it is blocklisted together with the
-         *     access token used to authenticate this request, so it can no longer
-         *     be used to mint new token pairs either.
-         */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LogoutPayload"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Confirmation that the session was closed. */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
+                    /** @description Credentials must not be stored in any cache. */
+                    "Cache-Control": string;
+                    /** @description Sent back empty and expired, so it is dropped. */
+                    "Set-Cookie: access_token": string;
+                    /** @description Sent back empty and expired, so it is dropped. */
+                    "Set-Cookie: refresh_token": string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageResponse"];
+                    "application/json": null;
                 };
             };
-            /** @description Raised when request components cannot be parsed */
-            400: {
+            /** @description Raised when auth was not successful */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -674,8 +622,8 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when auth was not successful */
-            401: {
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -710,24 +658,25 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description A refresh token used to obtain a new token pair without re-authenticating. */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshPayload"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description A new access/refresh token pair. */
+            /** @description The authenticated user. */
             200: {
                 headers: {
+                    /** @description Credentials must not be stored in any cache. */
+                    "Cache-Control": string;
+                    /** @description Access token, sent with every API request. */
+                    "Set-Cookie: access_token": string;
+                    /** @description Refresh token, only sent to the refresh endpoint. */
+                    "Set-Cookie: refresh_token": string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenPairResponse"];
+                    "application/json": components["schemas"]["UserOut"];
                 };
             };
-            /** @description Raised when request components cannot be parsed */
-            400: {
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -735,8 +684,8 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -807,6 +756,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
             /** @description Raised when provided `Accept` header cannot be satisfied */
             406: {
                 headers: {
@@ -870,6 +828,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
             /** @description Raised when provided `Accept` header cannot be satisfied */
             406: {
                 headers: {
@@ -922,6 +889,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -992,6 +968,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1076,6 +1061,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
             /** @description Not Found */
             404: {
                 headers: {
@@ -1139,6 +1133,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1223,6 +1226,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
             /** @description Not Found */
             404: {
                 headers: {
@@ -1288,6 +1300,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1372,6 +1393,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
             /** @description Not Found */
             404: {
                 headers: {
@@ -1439,6 +1469,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1517,6 +1556,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
             /** @description Raised when provided `Accept` header cannot be satisfied */
             406: {
                 headers: {
@@ -1557,6 +1605,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1616,6 +1673,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1686,6 +1752,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1769,6 +1844,15 @@ export interface operations {
             };
             /** @description Raised when auth was not successful */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

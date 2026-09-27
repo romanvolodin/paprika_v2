@@ -1,69 +1,46 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { useStorage } from '@vueuse/core'
 import * as authApi from '@/api/auth'
-import { getMe } from '@/api/users'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import type { UserOut } from '@/types/api'
 
 export const useAuthStore = defineStore('auth', () => {
-  // In-memory only: cleared on reload. Deliberate for now (see project
-  // notes on cookie-based refresh before the real prod launch) - an XSS
-  // could still read this while it lives, so we don't extend its
-  // lifetime beyond the current tab session.
-  const accessToken = ref<string | null>(null)
-
-  // Persisted so a page reload doesn't force a re-login.
-  const refreshToken = useStorage<string | null>('paprika:refresh-token', null)
-
+  // Both tokens live in httponly cookies now - the browser sends and
+  // stores them on its own, and JavaScript can't read them even to
+  // check whether they exist. `currentUser` is the only signal we have
+  // left for "am I logged in".
   const currentUser = ref<UserOut | null>(null)
 
-  const isAuthenticated = computed(() => accessToken.value !== null)
-
-  function setTokens(tokens: { access_token: string; refresh_token: string }) {
-    accessToken.value = tokens.access_token
-    refreshToken.value = tokens.refresh_token
-  }
+  const isAuthenticated = computed(() => currentUser.value !== null)
 
   function clearSession() {
-    accessToken.value = null
-    refreshToken.value = null
     currentUser.value = null
     useCurrentCompanyStore().reset()
   }
 
   async function login(email: string, password: string) {
-    const tokens = await authApi.login(email, password)
-    setTokens(tokens)
-    currentUser.value = await getMe()
+    currentUser.value = await authApi.login(email, password)
   }
 
-  /** Exchange the stored refresh token for a new pair. Returns the new access token. */
-  async function refresh(): Promise<string> {
-    if (!refreshToken.value) {
-      throw new Error('No refresh token available.')
-    }
-    const tokens = await authApi.refresh(refreshToken.value)
-    setTokens(tokens)
-    return tokens.access_token
+  /** Exchange the refresh cookie for a new pair and refresh `currentUser`. */
+  async function refresh(): Promise<void> {
+    currentUser.value = await authApi.refresh()
   }
 
-  /** Restore a session from the persisted refresh token, e.g. on app load. */
+  /** Restore a session from the refresh cookie, e.g. on app load. */
   async function restoreSession() {
-    if (!refreshToken.value || accessToken.value) return
+    if (currentUser.value) return
     try {
       await refresh()
-      currentUser.value = await getMe()
     } catch {
       clearSession()
     }
   }
 
   async function logout() {
-    const tokenToRevoke = refreshToken.value
     clearSession()
     try {
-      await authApi.logout(tokenToRevoke)
+      await authApi.logout()
     } catch {
       // Already logged out locally; a failed revoke call server-side
       // isn't worth surfacing to the user.
@@ -71,7 +48,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    accessToken,
     currentUser,
     isAuthenticated,
     login,

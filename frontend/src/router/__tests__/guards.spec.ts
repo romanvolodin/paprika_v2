@@ -5,10 +5,21 @@ import { setupAuthGuard } from '@/router/guards'
 import { useAuthStore } from '@/stores/auth'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import * as companiesApi from '@/api/companies'
+import type { UserOut } from '@/types/api'
 
 vi.mock('@/api/auth')
 vi.mock('@/api/users')
 vi.mock('@/api/companies')
+
+const user: UserOut = {
+  id: 1,
+  email: 'roman@paprika.dev',
+  first_name: 'Roman',
+  last_name: 'Volodin',
+  avatar: null,
+  is_active: true,
+  date_joined: '2026-01-01T00:00:00Z',
+}
 
 function buildRouter() {
   const router = createRouter({
@@ -29,7 +40,6 @@ function buildRouter() {
 
 describe('setupAuthGuard', () => {
   beforeEach(() => {
-    localStorage.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
     // Most guard tests aren't about the company switcher - give it an
@@ -44,6 +54,10 @@ describe('setupAuthGuard', () => {
   })
 
   it('redirects an unauthenticated visitor away from a protected route, preserving the destination', async () => {
+    const authApi = await import('@/api/auth')
+    // No session cookie at all - the silent refresh attempt on this
+    // first navigation should fail.
+    vi.mocked(authApi.refresh).mockRejectedValue(new Error('401'))
     const router = buildRouter()
 
     await router.push('/users')
@@ -55,7 +69,7 @@ describe('setupAuthGuard', () => {
   it('lets an authenticated visitor through to a protected route', async () => {
     const router = buildRouter()
     const auth = useAuthStore()
-    auth.accessToken = 'a-valid-token'
+    auth.currentUser = user
 
     await router.push('/users')
 
@@ -65,7 +79,7 @@ describe('setupAuthGuard', () => {
   it('redirects an already-authenticated visitor away from the login page', async () => {
     const router = buildRouter()
     const auth = useAuthStore()
-    auth.accessToken = 'a-valid-token'
+    auth.currentUser = user
 
     await router.push('/login')
 
@@ -73,6 +87,8 @@ describe('setupAuthGuard', () => {
   })
 
   it('lets an unauthenticated visitor reach the login page', async () => {
+    const authApi = await import('@/api/auth')
+    vi.mocked(authApi.refresh).mockRejectedValue(new Error('401'))
     const router = buildRouter()
 
     await router.push('/login')
@@ -80,28 +96,14 @@ describe('setupAuthGuard', () => {
     expect(router.currentRoute.value.name).toBe('login')
   })
 
-  it('tries to restore a session from a persisted refresh token before deciding', async () => {
-    localStorage.setItem('paprika:refresh-token', 'stale-refresh-token')
+  it('tries to restore a session from the refresh cookie before deciding', async () => {
     const authApi = await import('@/api/auth')
-    const usersApi = await import('@/api/users')
-    vi.mocked(authApi.refresh).mockResolvedValue({
-      access_token: 'restored-token',
-      refresh_token: 'rotated-refresh-token',
-    })
-    vi.mocked(usersApi.getMe).mockResolvedValue({
-      id: 1,
-      email: 'roman@paprika.dev',
-      first_name: 'Roman',
-      last_name: 'Volodin',
-      avatar: null,
-      is_active: true,
-      date_joined: '2026-01-01T00:00:00Z',
-    })
+    vi.mocked(authApi.refresh).mockResolvedValue(user)
 
     const router = buildRouter()
     await router.push('/users')
 
-    expect(authApi.refresh).toHaveBeenCalledWith('stale-refresh-token')
+    expect(authApi.refresh).toHaveBeenCalledWith()
     expect(router.currentRoute.value.name).toBe('users-list')
   })
 
@@ -115,7 +117,7 @@ describe('setupAuthGuard', () => {
 
     const router = buildRouter()
     const auth = useAuthStore()
-    auth.accessToken = 'a-valid-token'
+    auth.currentUser = user
 
     await router.push('/users')
 
@@ -128,7 +130,7 @@ describe('setupAuthGuard', () => {
   it('does not re-fetch companies on a second navigation once already initialized', async () => {
     const router = buildRouter()
     const auth = useAuthStore()
-    auth.accessToken = 'a-valid-token'
+    auth.currentUser = user
 
     await router.push('/users')
     await router.push('/login')

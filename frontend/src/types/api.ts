@@ -12,9 +12,6 @@
  */
 import type { components, operations } from '@/api/schema'
 
-export type TokenPairResponse = components['schemas']['TokenPairResponse']
-export type MessageResponse = components['schemas']['MessageResponse']
-
 export type UserOut = components['schemas']['UserOut']
 export type UserListOut = components['schemas']['UserListOut']
 export type UserCreateIn = components['schemas']['UserCreateIn']

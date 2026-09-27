@@ -1,15 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { InternalAxiosRequestConfig } from 'axios'
 
-// The interceptors in client.ts call `useAuthStore()` directly rather than
+// The interceptor in client.ts calls `useAuthStore()` directly rather than
 // receiving it as an argument, so we mock the store module itself with a
 // single shared, mutable fake instead of spinning up a real Pinia store.
-// This keeps these tests focused on the interceptor plumbing (header
-// attachment, refresh-once, queueing, give-up-and-logout) rather than on
-// auth store behaviour, which already has its own tests.
+// This keeps these tests focused on the interceptor plumbing (refresh-once,
+// queueing, give-up-and-logout) rather than on auth store behaviour, which
+// already has its own tests.
 const authState = {
-  accessToken: null as string | null,
-  refresh: vi.fn<() => Promise<string>>(),
+  refresh: vi.fn<() => Promise<void>>(),
   logout: vi.fn(),
 }
 
@@ -36,35 +35,24 @@ function ok(config: RetryableConfig, data: unknown = { ok: true }) {
 
 describe('apiClient', () => {
   beforeEach(() => {
-    authState.accessToken = null
     authState.refresh.mockReset()
     authState.logout.mockReset()
   })
 
-  it('attaches the access token from the auth store as a Bearer header', async () => {
-    authState.accessToken = 'abc123'
-    apiClient.defaults.adapter = vi.fn(async (config: RetryableConfig) => {
-      expect(config.headers.Authorization).toBe('Bearer abc123')
-      return ok(config)
-    })
-
-    await apiClient.get('/users/me/')
-  })
-
-  it('sends no Authorization header when logged out', async () => {
-    apiClient.defaults.adapter = vi.fn(async (config: RetryableConfig) => {
-      expect(config.headers.Authorization).toBeUndefined()
-      return ok(config)
-    })
-
-    await apiClient.get('/users/me/')
+  it('sends cookies and the CSRF header on cross-origin requests too', () => {
+    // Auth is cookie-based now, and the CSRF cookie/header pair is how
+    // Django checks state-changing requests - both need to survive the
+    // Vite dev server (5173) talking to Django (8000) on a different port.
+    expect(apiClient.defaults.withCredentials).toBe(true)
+    expect(apiClient.defaults.withXSRFToken).toBe(true)
+    expect(apiClient.defaults.xsrfCookieName).toBe('csrftoken')
+    expect(apiClient.defaults.xsrfHeaderName).toBe('X-CSRFToken')
   })
 
   it('refreshes once and retries the original request on a 401', async () => {
-    authState.refresh.mockResolvedValue('new-access-token')
+    authState.refresh.mockResolvedValue(undefined)
     apiClient.defaults.adapter = vi.fn(async (config: RetryableConfig) => {
       if (!config._retried) throw unauthorized(config)
-      expect(config.headers.Authorization).toBe('Bearer new-access-token')
       return ok(config)
     })
 
@@ -75,7 +63,7 @@ describe('apiClient', () => {
   })
 
   it('deduplicates concurrent 401s into a single refresh call', async () => {
-    authState.refresh.mockResolvedValue('new-access-token')
+    authState.refresh.mockResolvedValue(undefined)
     apiClient.defaults.adapter = vi.fn(async (config: RetryableConfig) => {
       if (!config._retried) throw unauthorized(config)
       return ok(config)
@@ -114,7 +102,7 @@ describe('apiClient', () => {
   })
 
   it('does not retry a request a second time if it 401s again after refresh', async () => {
-    authState.refresh.mockResolvedValue('new-access-token')
+    authState.refresh.mockResolvedValue(undefined)
     apiClient.defaults.adapter = vi.fn(async (config: RetryableConfig) => {
       // Always 401s, even after the retry - e.g. the user was deactivated
       // server-side. Should surface the error instead of looping forever.

@@ -1,15 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import * as authApi from '@/api/auth'
-import * as usersApi from '@/api/users'
 import type { UserOut } from '@/types/api'
 
 vi.mock('@/api/auth')
-vi.mock('@/api/users')
 
-const tokens = { access_token: 'access-1', refresh_token: 'refresh-1' }
 const user: UserOut = {
   id: 1,
   email: 'roman@paprika.dev',
@@ -22,7 +18,6 @@ const user: UserOut = {
 
 describe('useAuthStore', () => {
   beforeEach(() => {
-    localStorage.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })
@@ -33,66 +28,41 @@ describe('useAuthStore', () => {
     expect(auth.currentUser).toBeNull()
   })
 
-  it('login stores tokens and fetches the current user', async () => {
-    vi.mocked(authApi.login).mockResolvedValue(tokens)
-    vi.mocked(usersApi.getMe).mockResolvedValue(user)
+  it('login stores the returned user - there are no tokens to hold, they are cookies', async () => {
+    vi.mocked(authApi.login).mockResolvedValue(user)
 
     const auth = useAuthStore()
     await auth.login('roman@paprika.dev', 'hunter2')
-    await nextTick()
 
     expect(authApi.login).toHaveBeenCalledWith('roman@paprika.dev', 'hunter2')
     expect(auth.isAuthenticated).toBe(true)
-    expect(auth.accessToken).toBe('access-1')
     expect(auth.currentUser).toEqual(user)
-    // Refresh token is the only thing persisted across reloads, stored
-    // as a plain string (VueUse doesn't JSON-wrap string-typed values).
-    expect(localStorage.getItem('paprika:refresh-token')).toBe('refresh-1')
   })
 
-  it('refresh throws when there is no refresh token to exchange', async () => {
-    const auth = useAuthStore()
-    await expect(auth.refresh()).rejects.toThrow('No refresh token available.')
-    expect(authApi.refresh).not.toHaveBeenCalled()
-  })
-
-  it('refresh exchanges the stored refresh token for a new pair', async () => {
-    vi.mocked(authApi.login).mockResolvedValue(tokens)
-    vi.mocked(usersApi.getMe).mockResolvedValue(user)
-    const auth = useAuthStore()
-    await auth.login('roman@paprika.dev', 'hunter2')
-
-    const rotated = { access_token: 'access-2', refresh_token: 'refresh-2' }
+  it('refresh calls the refresh endpoint with no arguments and updates currentUser', async () => {
+    const rotated = { ...user, first_name: 'Romka' }
     vi.mocked(authApi.refresh).mockResolvedValue(rotated)
 
-    const newAccessToken = await auth.refresh()
-
-    expect(authApi.refresh).toHaveBeenCalledWith('refresh-1')
-    expect(newAccessToken).toBe('access-2')
-    expect(auth.accessToken).toBe('access-2')
-  })
-
-  it('restoreSession does nothing when there is no persisted refresh token', async () => {
     const auth = useAuthStore()
-    await auth.restoreSession()
-    expect(authApi.refresh).not.toHaveBeenCalled()
-    expect(auth.isAuthenticated).toBe(false)
+    await auth.refresh()
+
+    expect(authApi.refresh).toHaveBeenCalledWith()
+    expect(auth.currentUser).toEqual(rotated)
   })
 
   it('restoreSession does nothing when already authenticated', async () => {
-    localStorage.setItem('paprika:refresh-token', 'refresh-1')
+    vi.mocked(authApi.login).mockResolvedValue(user)
     const auth = useAuthStore()
-    auth.accessToken = 'already-set'
+    await auth.login('roman@paprika.dev', 'hunter2')
+    vi.mocked(authApi.refresh).mockClear()
 
     await auth.restoreSession()
 
     expect(authApi.refresh).not.toHaveBeenCalled()
   })
 
-  it('restoreSession exchanges a persisted refresh token for a session', async () => {
-    localStorage.setItem('paprika:refresh-token', 'refresh-1')
-    vi.mocked(authApi.refresh).mockResolvedValue(tokens)
-    vi.mocked(usersApi.getMe).mockResolvedValue(user)
+  it('restoreSession exchanges the refresh cookie for a session', async () => {
+    vi.mocked(authApi.refresh).mockResolvedValue(user)
 
     const auth = useAuthStore()
     await auth.restoreSession()
@@ -101,22 +71,18 @@ describe('useAuthStore', () => {
     expect(auth.currentUser).toEqual(user)
   })
 
-  it('restoreSession clears the session if the refresh token is rejected', async () => {
-    localStorage.setItem('paprika:refresh-token', 'stale-token')
-    vi.mocked(authApi.refresh).mockRejectedValue(new Error('token revoked'))
+  it('restoreSession clears the session if there is no valid refresh cookie', async () => {
+    vi.mocked(authApi.refresh).mockRejectedValue(new Error('401'))
 
     const auth = useAuthStore()
     await auth.restoreSession()
-    await nextTick()
 
     expect(auth.isAuthenticated).toBe(false)
-    // Clearing the ref removes the key entirely rather than writing "null".
-    expect(localStorage.getItem('paprika:refresh-token')).toBeNull()
+    expect(auth.currentUser).toBeNull()
   })
 
   it('logout clears local state immediately, even if the server call fails', async () => {
-    vi.mocked(authApi.login).mockResolvedValue(tokens)
-    vi.mocked(usersApi.getMe).mockResolvedValue(user)
+    vi.mocked(authApi.login).mockResolvedValue(user)
     vi.mocked(authApi.logout).mockRejectedValue(new Error('network error'))
 
     const auth = useAuthStore()
@@ -125,7 +91,6 @@ describe('useAuthStore', () => {
 
     expect(auth.isAuthenticated).toBe(false)
     expect(auth.currentUser).toBeNull()
-    // Revokes the token that was active *before* clearing, not `null`.
-    expect(authApi.logout).toHaveBeenCalledWith('refresh-1')
+    expect(authApi.logout).toHaveBeenCalledWith()
   })
 })

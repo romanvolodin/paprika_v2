@@ -3,16 +3,17 @@ import { useAuthStore } from '@/stores/auth'
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-})
-
-// --- Attach the access token to every request -----------------------------
-
-apiClient.interceptors.request.use((config) => {
-  const auth = useAuthStore()
-  if (auth.accessToken) {
-    config.headers.Authorization = `Bearer ${auth.accessToken}`
-  }
-  return config
+  // Auth now rides on httponly cookies instead of a header we attach by
+  // hand - the browser sends/stores them on its own, but only if we ask
+  // it to for cross-origin requests too (the Vite dev server and Django
+  // run on different ports).
+  withCredentials: true,
+  // Django's CSRF cookie (`csrftoken`) is not httponly, specifically so
+  // it can be echoed back as a header on state-changing requests. Axios
+  // does this automatically once these are set - no code needed per call.
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
+  withXSRFToken: true,
 })
 
 // --- Refresh-once-and-queue on 401 -----------------------------------------
@@ -25,17 +26,14 @@ apiClient.interceptors.request.use((config) => {
 
 type RetryableConfig = InternalAxiosRequestConfig & { _retried?: boolean }
 
-let refreshPromise: Promise<string> | null = null
+let refreshPromise: Promise<void> | null = null
 
-async function refreshAccessToken(): Promise<string> {
+async function refreshSession(): Promise<void> {
   const auth = useAuthStore()
 
-  refreshPromise ??= auth
-    .refresh()
-    .then((token) => token)
-    .finally(() => {
-      refreshPromise = null
-    })
+  refreshPromise ??= auth.refresh().finally(() => {
+    refreshPromise = null
+  })
 
   return refreshPromise
 }
@@ -55,8 +53,9 @@ apiClient.interceptors.response.use(
     config._retried = true
 
     try {
-      const newAccessToken = await refreshAccessToken()
-      config.headers.Authorization = `Bearer ${newAccessToken}`
+      await refreshSession()
+      // The new access cookie is already attached by the browser - just
+      // replay the original request.
       return apiClient(config)
     } catch (refreshError) {
       auth.logout()
