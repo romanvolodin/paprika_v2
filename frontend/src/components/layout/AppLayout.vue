@@ -5,6 +5,7 @@ import { NIcon, type MenuOption } from 'naive-ui'
 import {
   PeopleOutline,
   BusinessOutline,
+  FilmOutline,
   MoonOutline,
   SunnyOutline,
   MenuOutline,
@@ -45,6 +46,11 @@ const menuOptions: MenuOption[] = [
     icon: renderIcon(PeopleOutline),
   },
   {
+    label: 'Проекты',
+    key: 'project-list',
+    icon: renderIcon(FilmOutline),
+  },
+  {
     label: 'Компании',
     key: 'company-list',
     icon: renderIcon(BusinessOutline),
@@ -53,6 +59,7 @@ const menuOptions: MenuOption[] = [
 
 const activeKey = computed(() => {
   if (route.name === 'users-list') return 'users-list'
+  if (route.name === 'project-list' || route.name === 'project-create') return 'project-list'
   if (route.name === 'company-list' || route.name === 'company-create') return 'company-list'
   return null
 })

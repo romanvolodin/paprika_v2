@@ -61,6 +61,25 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/projects',
+      name: 'project-list',
+      component: () => import('@/views/ProjectsListView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/projects/new',
+      name: 'project-create',
+      component: () => import('@/views/ProjectFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/projects/:id(\\d+)',
+      name: 'project-detail',
+      component: () => import('@/views/ProjectDetailView.vue'),
+      props: (route) => ({ projectId: Number(route.params.id) }),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),

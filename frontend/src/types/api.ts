@@ -34,4 +34,25 @@ export type CompanyMemberOut = components['schemas']['CompanyMemberOut']
 export type CompanyMemberListOut = components['schemas']['CompanyMemberListOut']
 export type CompanyMemberCreateIn = components['schemas']['CompanyMemberCreateIn']
 export type CompanyMemberUpdateIn = components['schemas']['CompanyMemberUpdateIn']
-export type CompanyMembershipRole = components['schemas']['Role']
+
+// `CompanyMembership.role` and `ProjectMembership.role` are the exact same
+// Python enum on the backend (the latter aliases the former), so the OpenAPI
+// document only ever generates one `Role` schema - shared here under a
+// name that doesn't imply it belongs to either resource specifically.
+export type MembershipRole = components['schemas']['Role']
+export type CompanyMembershipRole = MembershipRole
+
+export type ProjectOut = components['schemas']['ProjectOut']
+export type ProjectListOut = components['schemas']['ProjectListOut']
+export type ProjectCreateIn = components['schemas']['ProjectCreateIn']
+export type ProjectUpdateIn = components['schemas']['ProjectUpdateIn']
+
+export type ProjectListQuery = NonNullable<
+  operations['getProjectlistcontrollerApiV1CompaniesCompanyIdProjects']['parameters']['query']
+>
+
+export type ProjectMemberOut = components['schemas']['ProjectMemberOut']
+export type ProjectMemberListOut = components['schemas']['ProjectMemberListOut']
+export type ProjectMemberCreateIn = components['schemas']['ProjectMemberCreateIn']
+export type ProjectMemberUpdateIn = components['schemas']['ProjectMemberUpdateIn']
+export type ProjectMembershipRole = MembershipRole

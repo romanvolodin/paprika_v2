@@ -167,6 +167,106 @@ export interface paths {
         patch: operations["patchCompanymemberdetailcontrollerApiV1CompaniesCompanyIdMembersUserId"];
         trace?: never;
     };
+    "/api/v1/companies/{company_id}/projects/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a company's projects
+         * @description Return a paginated list of projects within the given company that the current user is a member of, optionally filtered by `search` against the name.
+         */
+        get: operations["getProjectlistcontrollerApiV1CompaniesCompanyIdProjects"];
+        put?: never;
+        /**
+         * Create a project
+         * @description Create a new project within the company. The creator is automatically added as an `admin` member.
+         */
+        post: operations["postProjectlistcontrollerApiV1CompaniesCompanyIdProjects"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a project
+         * @description Return a single project by id.
+         */
+        get: operations["getProjectdetailcontrollerApiV1ProjectsProjectId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a project
+         * @description Permanently delete a project and all its memberships.
+         */
+        delete: operations["deleteProjectdetailcontrollerApiV1ProjectsProjectId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a project
+         * @description Partially update a project. Only fields present are changed. `code` cannot be changed - it's immutable once set.
+         */
+        patch: operations["patchProjectdetailcontrollerApiV1ProjectsProjectId"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/members/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List project members
+         * @description Return every member of the project.
+         */
+        get: operations["getProjectmemberlistcontrollerApiV1ProjectsProjectIdMembers"];
+        put?: never;
+        /**
+         * Add a project member
+         * @description Add an existing company member to the project with the given role. The target user must already be a member of the project's company.
+         */
+        post: operations["postProjectmemberlistcontrollerApiV1ProjectsProjectIdMembers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/members/{user_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a project member
+         * @description Remove a member from the project.
+         */
+        delete: operations["deleteProjectmemberdetailcontrollerApiV1ProjectsProjectIdMembersUserId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a project member's role
+         * @description Change the role of an existing project member.
+         */
+        patch: operations["patchProjectmemberdetailcontrollerApiV1ProjectsProjectIdMembersUserId"];
+        trace?: never;
+    };
     "/api/v1/users/": {
         parameters: {
             query?: never;
@@ -408,6 +508,171 @@ export interface components {
              * @example W5&faQ36$f6
              */
             password: string;
+        };
+        /**
+         * ProjectCreateIn
+         * @description Payload for `POST /api/v1/companies/<company_id>/projects/`.
+         */
+        ProjectCreateIn: {
+            /** Name */
+            name: string;
+            /**
+             * Code
+             * @description Short, URL-friendly project code (e.g. `PRJ`). Set once - cannot be changed later.
+             */
+            code: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Start Date */
+            start_date?: string | null;
+            /** Deadline */
+            deadline?: string | null;
+        };
+        /**
+         * ProjectListOut
+         * @description A page of projects the current user is a member of, within a company.
+         */
+        ProjectListOut: {
+            /** Items */
+            items: components["schemas"]["ProjectOut"][];
+            /**
+             * Total
+             * @description Total number of projects matching filters.
+             */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /**
+         * ProjectMemberCreateIn
+         * @description Payload for `POST /api/v1/projects/<id>/members/`.
+         *
+         *     `user_id` must belong to a user who is already a `CompanyMembership`
+         *     member of the project's company.
+         */
+        ProjectMemberCreateIn: {
+            /** User Id */
+            user_id: number;
+            role?: components["schemas"]["Role"];
+        };
+        /**
+         * ProjectMemberListOut
+         * @description The full list of a project's members (not paginated).
+         */
+        ProjectMemberListOut: {
+            /** Items */
+            items: components["schemas"]["ProjectMemberOut"][];
+        };
+        /**
+         * ProjectMemberOut
+         * @description Public representation of a project membership.
+         */
+        ProjectMemberOut: {
+            /**
+             * Id
+             * @description Internal numeric membership identifier.
+             */
+            id: number;
+            /** User Id */
+            user_id: number;
+            /** Email */
+            email: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /**
+             * Avatar
+             * @description Absolute URL of the member's avatar image, or null if none.
+             */
+            avatar?: string | null;
+            role: components["schemas"]["Role"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * ProjectMemberUpdateIn
+         * @description Payload for `PATCH /api/v1/projects/<id>/members/<user_id>/`.
+         */
+        ProjectMemberUpdateIn: {
+            role: components["schemas"]["Role"];
+        };
+        /**
+         * ProjectOut
+         * @description Public representation of a project.
+         */
+        ProjectOut: {
+            /**
+             * Id
+             * @description Internal numeric project identifier.
+             */
+            id: number;
+            /** Company Id */
+            company_id: number;
+            /**
+             * Name
+             * @description Project name.
+             */
+            name: string;
+            /**
+             * Code
+             * @description Short, URL-friendly project code (e.g. `PRJ`). Immutable.
+             */
+            code: string;
+            /** Description */
+            description: string;
+            /**
+             * Cover
+             * @description Absolute URL of the project's cover image, or null if none.
+             */
+            cover?: string | null;
+            /** Start Date */
+            start_date: string | null;
+            /** Deadline */
+            deadline: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** @description The user who created the project, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated the project, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ProjectUpdateIn
+         * @description Payload for `PATCH /api/v1/projects/<id>/`. All fields are optional.
+         *
+         *     `code` is intentionally absent - it's immutable once the project is
+         *     created.
+         */
+        ProjectUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+            /** Deadline */
+            deadline?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
         };
         /**
          * Role
@@ -1373,6 +1638,764 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyMemberOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getProjectlistcontrollerApiV1CompaniesCompanyIdProjects: {
+        parameters: {
+            query?: {
+                /** @description 1-indexed page number. */
+                page?: number;
+                /** @description Number of projects per page. */
+                page_size?: number;
+                /** @description Case-insensitive match against the project name. */
+                search?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's projects collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of projects. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postProjectlistcontrollerApiV1CompaniesCompanyIdProjects: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's projects collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/companies/<company_id>/projects/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created project. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getProjectdetailcontrollerApiV1ProjectsProjectId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single project. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested project. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteProjectdetailcontrollerApiV1ProjectsProjectId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single project. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchProjectdetailcontrollerApiV1ProjectsProjectId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single project. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `PATCH /api/v1/projects/<id>/`. All fields are optional.
+         *
+         *     `code` is intentionally absent - it's immutable once the project is
+         *     created.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated project. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getProjectmemberlistcontrollerApiV1ProjectsProjectIdMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single project. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The project's members. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectMemberListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postProjectmemberlistcontrollerApiV1ProjectsProjectIdMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single project. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `POST /api/v1/projects/<id>/members/`.
+         *
+         *     `user_id` must belong to a user who is already a `CompanyMembership`
+         *     member of the project's company.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectMemberCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created membership. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectMemberOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteProjectmemberdetailcontrollerApiV1ProjectsProjectIdMembersUserId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single project member. */
+                project_id: number;
+                /** @description URL path parameters identifying a single project member. */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchProjectmemberdetailcontrollerApiV1ProjectsProjectIdMembersUserId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single project member. */
+                project_id: number;
+                /** @description URL path parameters identifying a single project member. */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `PATCH /api/v1/projects/<id>/members/<user_id>/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectMemberUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated membership. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectMemberOut"];
                 };
             };
             /** @description Raised when request components cannot be parsed */

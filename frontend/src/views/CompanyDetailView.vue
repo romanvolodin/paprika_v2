@@ -22,7 +22,7 @@ import { AddOutline, ArrowBackOutline, TrashOutline } from '@vicons/ionicons5'
 import { useCompanyDetailStore } from '@/stores/companyDetail'
 import { useCompanyPermissions } from '@/composables/useCompanyPermissions'
 import { useUserSearchOptions } from '@/composables/useUserSearchOptions'
-import { COMPANY_ROLE_LABELS, COMPANY_ROLE_OPTIONS } from '@/constants/companyRoles'
+import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
 import { slugify } from '@/utils/slugify'
 import type { CompanyMemberOut, CompanyMembershipRole, UserOut } from '@/types/api'
 
@@ -166,14 +166,14 @@ const columns = computed<DataTableColumns<CompanyMemberOut>>(() => [
       canChangeMemberRole(member.user_id)
         ? h(NSelect, {
             value: member.role,
-            options: COMPANY_ROLE_OPTIONS,
+            options: MEMBERSHIP_ROLE_OPTIONS,
             size: 'small',
             onUpdateValue: (role: CompanyMembershipRole) => handleRoleChange(member, role),
           })
         : h(
             NTag,
             { size: 'small', round: true },
-            { default: () => COMPANY_ROLE_LABELS[member.role] },
+            { default: () => MEMBERSHIP_ROLE_LABELS[member.role] },
           ),
   },
   {
@@ -307,7 +307,7 @@ async function handleAddMember() {
         />
         <n-select
           v-model:value="newMemberRole"
-          :options="COMPANY_ROLE_OPTIONS"
+          :options="MEMBERSHIP_ROLE_OPTIONS"
           style="max-width: 180px"
         />
         <n-button
