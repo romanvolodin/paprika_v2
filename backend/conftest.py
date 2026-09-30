@@ -14,6 +14,7 @@ from django.test.client import BOUNDARY, encode_multipart
 import pytest
 
 from apps.companies.tests.factories import CompanyFactory, CompanyMembershipFactory
+from apps.projects.tests.factories import ProjectFactory, ProjectMembershipFactory
 from apps.users.tests.factories import DEFAULT_PASSWORD, UserFactory
 
 
@@ -99,6 +100,24 @@ def company(company_factory):
 def company_membership_factory():
     """The `CompanyMembershipFactory` class itself."""
     return CompanyMembershipFactory
+
+
+@pytest.fixture
+def project_factory():
+    """The `ProjectFactory` class itself, e.g. `project_factory(name=...)`."""
+    return ProjectFactory
+
+
+@pytest.fixture
+def project(project_factory):
+    """A single saved project with default field values."""
+    return project_factory()
+
+
+@pytest.fixture
+def project_membership_factory():
+    """The `ProjectMembershipFactory` class itself."""
+    return ProjectMembershipFactory
 
 
 @pytest.fixture
