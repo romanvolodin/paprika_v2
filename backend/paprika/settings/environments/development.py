@@ -14,3 +14,8 @@ CORS_ALLOWED_ORIGINS = [
 # preflight response needs to allow credentials, or the browser won't
 # store or send them at all.
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
