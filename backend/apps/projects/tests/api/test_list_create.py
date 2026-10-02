@@ -1,6 +1,6 @@
 from http import HTTPStatus
-import json
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
 from apps.projects.models import Project, ProjectMembership
@@ -8,9 +8,14 @@ from apps.projects.models import Project, ProjectMembership
 
 pytestmark = pytest.mark.django_db
 
+PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 100
 
-def _post_json(client, path, payload):
-    return client.post(path, data=json.dumps(payload), content_type="application/json")
+
+def _post_multipart(client, path, payload):
+    # The endpoint now only accepts `multipart/form-data` (it can take a
+    # `cover` file), so every create call goes through it - Django's test
+    # client already defaults to multipart encoding for a plain dict.
+    return client.post(path, data=payload)
 
 
 class TestListProjects:
@@ -98,7 +103,7 @@ class TestCreateProject:
     ):
         company_membership_factory(user=auth_user, company=company)
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Acme Feature", "code": "PRJ"},
@@ -116,7 +121,7 @@ class TestCreateProject:
     ):
         company_membership_factory(user=auth_user, company=company)
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Acme Feature", "code": "PRJ"},
@@ -132,7 +137,7 @@ class TestCreateProject:
     ):
         company_membership_factory(user=auth_user, company=company)
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Acme Feature", "code": "PRJ"},
@@ -146,7 +151,7 @@ class TestCreateProject:
         self, auth_client, auth_user, company, company_membership_factory
     ):
         company_membership_factory(user=auth_user, company=company)
-        create_response = _post_json(
+        create_response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Acme Feature", "code": "PRJ"},
@@ -156,6 +161,21 @@ class TestCreateProject:
         response = auth_client.get(f"/api/v1/projects/{project_id}/")
 
         assert response.status_code == 200
+
+    def test_creates_a_project_with_a_cover(
+        self, auth_client, auth_user, company, company_membership_factory
+    ):
+        company_membership_factory(user=auth_user, company=company)
+        cover = SimpleUploadedFile("cover.png", PNG_BYTES, content_type="image/png")
+
+        response = auth_client.post(
+            f"/api/v1/companies/{company.id}/projects/",
+            data={"name": "Acme Feature", "code": "PRJ", "cover": cover},
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        assert response.json()["cover"] is not None
+        assert response.json()["cover"].endswith("cover.png")
 
     def test_rejects_duplicate_code_within_company(
         self,
@@ -168,7 +188,7 @@ class TestCreateProject:
         company_membership_factory(user=auth_user, company=company)
         project_factory(company=company, code="PRJ")
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Another", "code": "PRJ"},
@@ -189,7 +209,7 @@ class TestCreateProject:
         my_company = company_factory()
         company_membership_factory(user=auth_user, company=my_company)
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{my_company.id}/projects/",
             {"name": "Mine", "code": "PRJ"},
@@ -202,7 +222,7 @@ class TestCreateProject:
     ):
         company_membership_factory(user=auth_user, company=company)
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Acme Feature", "code": "PRJ 001!"},
@@ -215,7 +235,7 @@ class TestCreateProject:
     ):
         company_membership_factory(user=auth_user, company=company)
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "", "code": "PRJ"},
@@ -228,7 +248,7 @@ class TestCreateProject:
     ):
         company_membership_factory(user=auth_user, company=company)
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {
@@ -247,7 +267,7 @@ class TestCreateProject:
         company = company_factory()
         company_membership_factory(company=company)  # some other user
 
-        response = _post_json(
+        response = _post_multipart(
             auth_client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Acme Feature", "code": "PRJ"},
@@ -256,7 +276,7 @@ class TestCreateProject:
         assert response.status_code == HTTPStatus.NOT_FOUND
 
     def test_requires_authentication(self, client, company):
-        response = _post_json(
+        response = _post_multipart(
             client,
             f"/api/v1/companies/{company.id}/projects/",
             {"name": "Acme Feature", "code": "PRJ"},

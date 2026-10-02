@@ -2,13 +2,13 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as companiesApi from '@/api/companies'
 import * as projectsApi from '@/api/projects'
+import type { UpdateProjectInput } from '@/api/projects'
 import type {
   CompanyMemberOut,
   ProjectMemberCreateIn,
   ProjectMemberOut,
   ProjectMembershipRole,
   ProjectOut,
-  ProjectUpdateIn,
 } from '@/types/api'
 
 export const useProjectDetailStore = defineStore('projectDetail', () => {
@@ -38,7 +38,7 @@ export const useProjectDetailStore = defineStore('projectDetail', () => {
     }
   }
 
-  async function updateProject(projectId: number, input: ProjectUpdateIn) {
+  async function updateProject(projectId: number, input: UpdateProjectInput) {
     project.value = await projectsApi.updateProject(projectId, input)
   }
 

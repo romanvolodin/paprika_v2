@@ -20,7 +20,7 @@ import {
   type FormRules,
   type SelectOption,
 } from 'naive-ui'
-import { AddOutline, ArrowBackOutline, TrashOutline } from '@vicons/ionicons5'
+import { AddOutline, ArrowBackOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
 import { useProjectDetailStore } from '@/stores/projectDetail'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
@@ -49,6 +49,33 @@ const startDate = ref<string | null>(null)
 const deadline = ref<string | null>(null)
 const isActive = ref(true)
 
+const existingCoverUrl = ref<string | null>(null)
+const newCoverFile = ref<File | null>(null)
+const newCoverPreviewUrl = ref<string | null>(null)
+const removeCover = ref(false)
+const coverInput = ref<HTMLInputElement | null>(null)
+
+const coverPreview = computed(() => newCoverPreviewUrl.value ?? existingCoverUrl.value)
+
+function pickCover() {
+  coverInput.value?.click()
+}
+
+function handleCoverChange(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  newCoverFile.value = file
+  newCoverPreviewUrl.value = URL.createObjectURL(file)
+  removeCover.value = false
+}
+
+function clearCover() {
+  newCoverFile.value = null
+  newCoverPreviewUrl.value = null
+  existingCoverUrl.value = null
+  removeCover.value = true
+}
+
 watch(
   () => store.project,
   (project) => {
@@ -58,6 +85,7 @@ watch(
     startDate.value = project.start_date
     deadline.value = project.deadline
     isActive.value = project.is_active
+    existingCoverUrl.value = project.cover ?? null
   },
   { immediate: true },
 )
@@ -80,9 +108,11 @@ async function handleSaveProject() {
     await store.updateProject(props.projectId, {
       name: name.value,
       description: description.value,
-      start_date: startDate.value,
+      startDate: startDate.value,
       deadline: deadline.value,
-      is_active: isActive.value,
+      isActive: isActive.value,
+      removeCover: removeCover.value,
+      cover: newCoverFile.value,
     })
     message.success('Проект обновлён.')
   } catch {
@@ -276,6 +306,28 @@ async function handleAddMember() {
         :disabled="!canEditProject"
         @submit.prevent="handleSaveProject"
       >
+        <div class="project-detail__cover">
+          <div class="project-detail__cover-preview">
+            <img v-if="coverPreview" :src="coverPreview" alt="" />
+            <n-icon v-else :component="CameraOutline" size="28" />
+          </div>
+          <div v-if="canEditProject" class="project-detail__cover-actions">
+            <input
+              ref="coverInput"
+              type="file"
+              accept="image/png,image/jpeg,image/gif"
+              class="project-detail__cover-input"
+              @change="handleCoverChange"
+            />
+            <n-button size="small" @click="pickCover">
+              {{ coverPreview ? 'Заменить обложку' : 'Загрузить обложку' }}
+            </n-button>
+            <n-button v-if="coverPreview" size="small" quaternary @click="clearCover">
+              <template #icon><n-icon :component="TrashOutline" /></template>
+            </n-button>
+          </div>
+        </div>
+
         <n-form-item label="Название" path="name">
           <n-input v-model:value="name" />
         </n-form-item>
@@ -418,6 +470,42 @@ async function handleAddMember() {
   margin: calc(var(--space-2) * -1) 0 var(--space-3);
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);
+}
+
+.project-detail__cover {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.project-detail__cover-preview {
+  width: 120px;
+  height: 68px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.project-detail__cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-detail__cover-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.project-detail__cover-input {
+  display: none;
 }
 
 .project-detail__loading {

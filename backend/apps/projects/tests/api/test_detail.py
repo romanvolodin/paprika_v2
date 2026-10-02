@@ -1,5 +1,4 @@
 from http import HTTPStatus
-import json
 
 import pytest
 
@@ -7,10 +6,6 @@ from apps.projects.models import Project, ProjectMembership
 
 
 pytestmark = pytest.mark.django_db
-
-
-def _patch_json(client, path, payload):
-    return client.patch(path, data=json.dumps(payload), content_type="application/json")
 
 
 class TestGetProject:
@@ -89,12 +84,17 @@ class TestGetProject:
 
 class TestUpdateProject:
     def test_updates_the_name(
-        self, auth_client, auth_user, project_factory, project_membership_factory
+        self,
+        auth_client,
+        auth_user,
+        multipart_patch,
+        project_factory,
+        project_membership_factory,
     ):
         project = project_factory(name="Old Name")
         project_membership_factory(user=auth_user, project=project)
 
-        response = _patch_json(
+        response = multipart_patch(
             auth_client, f"/api/v1/projects/{project.id}/", {"name": "New Name"}
         )
 
@@ -102,7 +102,12 @@ class TestUpdateProject:
         assert response.json()["name"] == "New Name"
 
     def test_code_cannot_be_changed(
-        self, auth_client, auth_user, project_factory, project_membership_factory
+        self,
+        auth_client,
+        auth_user,
+        multipart_patch,
+        project_factory,
+        project_membership_factory,
     ):
         # `code` is intentionally absent from the update schema - passing
         # it is simply ignored, not an error, since extra fields aren't
@@ -110,7 +115,7 @@ class TestUpdateProject:
         project = project_factory(code="PRJ")
         project_membership_factory(user=auth_user, project=project)
 
-        response = _patch_json(
+        response = multipart_patch(
             auth_client,
             f"/api/v1/projects/{project.id}/",
             {"code": "HACKED"},
@@ -120,24 +125,34 @@ class TestUpdateProject:
         assert response.json()["code"] == "PRJ"
 
     def test_can_archive_a_project(
-        self, auth_client, auth_user, project_factory, project_membership_factory
+        self,
+        auth_client,
+        auth_user,
+        multipart_patch,
+        project_factory,
+        project_membership_factory,
     ):
         project = project_factory(is_active=True)
         project_membership_factory(user=auth_user, project=project)
 
-        response = _patch_json(
-            auth_client, f"/api/v1/projects/{project.id}/", {"is_active": False}
+        response = multipart_patch(
+            auth_client, f"/api/v1/projects/{project.id}/", {"is_active": "false"}
         )
 
         assert response.json()["is_active"] is False
 
     def test_rejects_deadline_before_start_date(
-        self, auth_client, auth_user, project_factory, project_membership_factory
+        self,
+        auth_client,
+        auth_user,
+        multipart_patch,
+        project_factory,
+        project_membership_factory,
     ):
         project = project_factory()
         project_membership_factory(user=auth_user, project=project)
 
-        response = _patch_json(
+        response = multipart_patch(
             auth_client,
             f"/api/v1/projects/{project.id}/",
             {"start_date": "2026-06-01", "deadline": "2026-01-01"},
@@ -146,32 +161,41 @@ class TestUpdateProject:
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
     def test_empty_body_changes_nothing(
-        self, auth_client, auth_user, project_factory, project_membership_factory
+        self,
+        auth_client,
+        auth_user,
+        multipart_patch,
+        project_factory,
+        project_membership_factory,
     ):
         project = project_factory(name="Untouched")
         project_membership_factory(user=auth_user, project=project)
 
-        response = _patch_json(auth_client, f"/api/v1/projects/{project.id}/", {})
+        response = multipart_patch(auth_client, f"/api/v1/projects/{project.id}/", {})
 
         assert response.status_code == 200
         assert response.json()["name"] == "Untouched"
 
     def test_non_member_gets_404(
-        self, auth_client, project_factory, project_membership_factory
+        self,
+        auth_client,
+        multipart_patch,
+        project_factory,
+        project_membership_factory,
     ):
         project = project_factory()
         project_membership_factory(project=project)
 
-        response = _patch_json(
+        response = multipart_patch(
             auth_client, f"/api/v1/projects/{project.id}/", {"name": "Hacked"}
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-    def test_requires_authentication(self, client, project_factory):
+    def test_requires_authentication(self, client, multipart_patch, project_factory):
         project = project_factory()
 
-        response = _patch_json(
+        response = multipart_patch(
             client, f"/api/v1/projects/{project.id}/", {"name": "Hacked"}
         )
 

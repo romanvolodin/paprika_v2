@@ -11,7 +11,7 @@ import {
   type FormInst,
   type FormRules,
 } from 'naive-ui'
-import { ArrowBackOutline } from '@vicons/ionicons5'
+import { ArrowBackOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
 import * as projectsApi from '@/api/projects'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 
@@ -27,6 +27,26 @@ const code = ref('')
 const description = ref('')
 const startDate = ref<string | null>(null)
 const deadline = ref<string | null>(null)
+
+const coverFile = ref<File | null>(null)
+const coverPreviewUrl = ref<string | null>(null)
+const coverInput = ref<HTMLInputElement | null>(null)
+
+function pickCover() {
+  coverInput.value?.click()
+}
+
+function handleCoverChange(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  coverFile.value = file
+  coverPreviewUrl.value = URL.createObjectURL(file)
+}
+
+function clearCover() {
+  coverFile.value = null
+  coverPreviewUrl.value = null
+}
 
 // Mirrors the backend's `code_validator` - letters, numbers, hyphens and
 // underscores only. Checked client-side too since `code` can't be
@@ -65,8 +85,9 @@ async function handleSubmit() {
       name: name.value,
       code: code.value,
       description: description.value,
-      start_date: startDate.value,
+      startDate: startDate.value,
       deadline: deadline.value,
+      cover: coverFile.value,
     })
     message.success('Проект создан.')
     router.push({ name: 'project-list' })
@@ -99,6 +120,28 @@ async function handleSubmit() {
       label-placement="top"
       @submit.prevent="handleSubmit"
     >
+      <div class="project-form__cover">
+        <div class="project-form__cover-preview">
+          <img v-if="coverPreviewUrl" :src="coverPreviewUrl" alt="" />
+          <n-icon v-else :component="CameraOutline" size="28" />
+        </div>
+        <div class="project-form__cover-actions">
+          <input
+            ref="coverInput"
+            type="file"
+            accept="image/png,image/jpeg,image/gif"
+            class="project-form__cover-input"
+            @change="handleCoverChange"
+          />
+          <n-button size="small" @click="pickCover">
+            {{ coverPreviewUrl ? 'Заменить обложку' : 'Загрузить обложку' }}
+          </n-button>
+          <n-button v-if="coverPreviewUrl" size="small" quaternary @click="clearCover">
+            <template #icon><n-icon :component="TrashOutline" /></template>
+          </n-button>
+        </div>
+      </div>
+
       <n-form-item label="Название" path="name">
         <n-input v-model:value="name" placeholder="Летающий кот" />
       </n-form-item>
@@ -175,6 +218,42 @@ async function handleSubmit() {
 
 .project-form__no-company {
   color: var(--color-text-secondary);
+}
+
+.project-form__cover {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.project-form__cover-preview {
+  width: 120px;
+  height: 68px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.project-form__cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-form__cover-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.project-form__cover-input {
+  display: none;
 }
 
 .project-form__hint {

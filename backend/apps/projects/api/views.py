@@ -1,8 +1,18 @@
 from http import HTTPStatus
 
 from django.core.paginator import Paginator
-from dmr import APIError, Body, Controller, Path, Query, ResponseSpec, modify
+from dmr import (
+    APIError,
+    Body,
+    Controller,
+    FileMetadata,
+    Path,
+    Query,
+    ResponseSpec,
+    modify,
+)
 from dmr.errors import ErrorType
+from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 
@@ -14,6 +24,7 @@ from apps.users.models import User
 
 from .schemas import (
     CompanyProjectsPath,
+    ProjectCoverFiles,
     ProjectCreateIn,
     ProjectListOut,
     ProjectListQuery,
@@ -49,6 +60,38 @@ def _serialize_project(request, project: Project) -> ProjectOut:
         created_at=project.created_at,
         updated_at=project.updated_at,
     )
+
+
+def _apply_cover(project: Project, files: ProjectCoverFiles, request) -> None:
+    """Replace the project's cover with the uploaded file, if any was sent.
+
+    See `apps.users.api.views._apply_avatar` - same pattern, same reason
+    for deleting the old file from storage directly rather than via
+    `FieldFile.delete()`.
+    """
+    if files.cover is None:
+        return
+
+    old_name = project.cover.name if project.cover else None
+    old_storage = project.cover.storage if project.cover else None
+
+    project.cover = request.FILES["cover"]
+    project.save(update_fields=["cover"])
+
+    if old_name:
+        old_storage.delete(old_name)
+
+
+def _clear_cover(project: Project) -> None:
+    """Remove the project's current cover, if any."""
+    old_name = project.cover.name if project.cover else None
+    old_storage = project.cover.storage if project.cover else None
+
+    project.cover = ""
+    project.save(update_fields=["cover"])
+
+    if old_name:
+        old_storage.delete(old_name)
 
 
 def _serialize_member(request, membership: ProjectMembership) -> ProjectMemberOut:
@@ -189,10 +232,14 @@ class ProjectListController(Controller[PydanticSerializer]):
         )
 
     @modify(
+        parsers=[MultiPartParser()],
         status_code=HTTPStatus.CREATED,
         summary="Create a project",
         description=(
-            "Create a new project within the company. The creator is "
+            "Create a new project within the company, optionally with a "
+            "cover image. Send as `multipart/form-data`: regular fields "
+            "for `name`, `code`, `description`, `start_date`, `deadline`, "
+            "plus an optional `cover` file field. The creator is "
             "automatically added as an `admin` member."
         ),
         response_description="The created project.",
@@ -206,6 +253,7 @@ class ProjectListController(Controller[PydanticSerializer]):
         self,
         parsed_path: Path[CompanyProjectsPath],
         parsed_body: Body[ProjectCreateIn],
+        parsed_file_metadata: FileMetadata[ProjectCoverFiles],
     ) -> ProjectOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
 
@@ -236,6 +284,7 @@ class ProjectListController(Controller[PydanticSerializer]):
             created_by=self.request.user,
             updated_by=self.request.user,
         )
+        _apply_cover(project, parsed_file_metadata, self.request)
         return _serialize_project(self.request, project)
 
 
@@ -259,10 +308,15 @@ class ProjectDetailController(Controller[PydanticSerializer]):
         return _serialize_project(self.request, project)
 
     @modify(
+        parsers=[MultiPartParser()],
         summary="Update a project",
         description=(
-            "Partially update a project. Only fields present are changed. "
-            "`code` cannot be changed - it's immutable once set."
+            "Partially update a project, optionally replacing or removing "
+            "its cover in the same request. Send as `multipart/form-data`: "
+            "any of `name`, `description`, `start_date`, `deadline`, "
+            "`is_active`, `remove_cover`, plus an optional `cover` file "
+            "field. Only fields actually present are changed. `code` "
+            "cannot be changed - it's immutable once set."
         ),
         response_description="The updated project.",
         extra_responses=[
@@ -275,15 +329,24 @@ class ProjectDetailController(Controller[PydanticSerializer]):
         self,
         parsed_path: Path[ProjectPath],
         parsed_body: Body[ProjectUpdateIn],
+        parsed_file_metadata: FileMetadata[ProjectCoverFiles],
     ) -> ProjectOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
 
-        update_fields = parsed_body.model_dump(exclude_unset=True)
+        update_fields = parsed_body.model_dump(
+            exclude={"remove_cover"},
+            exclude_unset=True,
+        )
         for field, value in update_fields.items():
             setattr(project, field, value)
         if update_fields:
             project.updated_by = self.request.user
             project.save(update_fields=[*update_fields, "updated_by"])
+
+        if parsed_file_metadata.cover is not None:
+            _apply_cover(project, parsed_file_metadata, self.request)
+        elif parsed_body.remove_cover and project.cover:
+            _clear_cover(project)
 
         return _serialize_project(self.request, project)
 

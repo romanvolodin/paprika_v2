@@ -4,10 +4,43 @@ import re
 import pydantic
 
 from apps.projects.models import ProjectMembership
+from apps.projects.validators import COVER_ALLOWED_EXTENSIONS, COVER_MAX_SIZE_MB
 from apps.users.api.schemas import UserOut
 
 
 CODE_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
+
+_COVER_EXTENSION_PATTERN = r"(?i)\.({})$".format(
+    "|".join(re.escape(ext) for ext in COVER_ALLOWED_EXTENSIONS),
+)
+
+
+class CoverFileMetadata(pydantic.BaseModel):
+    """Validates an uploaded cover's metadata before it touches the DB.
+
+    Mirrors the constraints already enforced by `Project.cover`'s own
+    validators (see `apps/projects/validators.py`) - see `AvatarFileMetadata`
+    in `apps/users/api/schemas.py` for the same pattern applied to avatars.
+    """
+
+    name: str = pydantic.Field(
+        pattern=_COVER_EXTENSION_PATTERN,
+        description=f"Allowed extensions: {', '.join(COVER_ALLOWED_EXTENSIONS)}.",
+    )
+    size: int = pydantic.Field(
+        le=COVER_MAX_SIZE_MB * 1024 * 1024,
+        description=f"Max {COVER_MAX_SIZE_MB} MB.",
+    )
+
+
+class ProjectCoverFiles(pydantic.BaseModel):
+    """Files accepted alongside a project create/update payload.
+
+    `cover` is optional: omit the field entirely to leave it untouched
+    (on update) or create the project without one (on create).
+    """
+
+    cover: CoverFileMetadata | None = None
 
 
 class ProjectOut(pydantic.BaseModel):
@@ -120,6 +153,13 @@ class ProjectUpdateIn(pydantic.BaseModel):
     start_date: dt.date | None = None
     deadline: dt.date | None = None
     is_active: bool | None = None
+    remove_cover: bool = pydantic.Field(
+        default=False,
+        description=(
+            "Set to true to delete the current cover. Ignored if a new "
+            "`cover` file is also sent in the same request."
+        ),
+    )
 
     @pydantic.model_validator(mode="after")
     def validate_deadline_after_start(self) -> ProjectUpdateIn:
