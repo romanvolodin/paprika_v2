@@ -15,6 +15,7 @@ import pytest
 
 from apps.companies.tests.factories import CompanyFactory, CompanyMembershipFactory
 from apps.projects.tests.factories import ProjectFactory, ProjectMembershipFactory
+from apps.shots.tests.factories import ShotGroupFactory
 from apps.users.tests.factories import DEFAULT_PASSWORD, UserFactory
 
 
@@ -118,6 +119,18 @@ def project(project_factory):
 def project_membership_factory():
     """The `ProjectMembershipFactory` class itself."""
     return ProjectMembershipFactory
+
+
+@pytest.fixture
+def shot_group_factory():
+    """The `ShotGroupFactory` class itself, e.g. `shot_group_factory(name=...)`."""
+    return ShotGroupFactory
+
+
+@pytest.fixture
+def shot_group(shot_group_factory):
+    """A single saved shot group with default field values."""
+    return shot_group_factory()
 
 
 @pytest.fixture
