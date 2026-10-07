@@ -1,19 +1,22 @@
 from http import HTTPStatus
 
 from django.core.paginator import Paginator
+from django.db.models import ProtectedError
 from dmr import APIError, Body, Controller, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
-from apps.projects.api.views import _get_project_or_404
+from apps.companies.models import Company
+from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project
-from apps.shots.models import Shot, ShotGroup
+from apps.shots.models import Shot, ShotGroup, ShotStatus
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
 
 from .schemas import (
+    CompanyShotStatusesPath,
     ProjectShotGroupsPath,
     ProjectShotsPath,
     ShotCreateIn,
@@ -28,6 +31,12 @@ from .schemas import (
     ShotListQuery,
     ShotOut,
     ShotPath,
+    ShotStatusCreateIn,
+    ShotStatusListOut,
+    ShotStatusListQuery,
+    ShotStatusOut,
+    ShotStatusPath,
+    ShotStatusUpdateIn,
     ShotUpdateIn,
 )
 
@@ -230,11 +239,252 @@ class ShotGroupDetailController(Controller[PydanticSerializer]):
         return None
 
 
+def _serialize_shot_status(request, shot_status: ShotStatus) -> ShotStatusOut:
+    return ShotStatusOut(
+        id=shot_status.id,
+        company_id=shot_status.company_id,
+        name=shot_status.name,
+        color=shot_status.color,
+        order=shot_status.order,
+        is_default=shot_status.is_default,
+        created_by=_serialize_user(request, shot_status.created_by)
+        if shot_status.created_by
+        else None,
+        updated_by=_serialize_user(request, shot_status.updated_by)
+        if shot_status.updated_by
+        else None,
+        created_at=shot_status.created_at,
+        updated_at=shot_status.updated_at,
+    )
+
+
+def _get_shot_status_or_404(user: User, shot_status_id: int) -> ShotStatus:
+    """Look up a shot status, scoped to companies the user is a member of.
+
+    Mirrors `apps.projects.api.views._get_company_or_404`.
+    """
+    try:
+        return (
+            ShotStatus.objects.filter(company__memberships__user=user)
+            .distinct()
+            .get(pk=shot_status_id)
+        )
+    except ShotStatus.DoesNotExist as exc:
+        raise APIError(
+            {"detail": f"Shot status with id={shot_status_id} was not found."},
+            status_code=HTTPStatus.NOT_FOUND,
+        ) from exc
+
+
+def _unset_other_defaults(company: Company, *, exclude_pk: int | None = None) -> None:
+    """Clear `is_default` on every other status of `company`.
+
+    Called before saving a status with `is_default=True` so there's
+    always at most one default per company - the swap, not a DB
+    constraint, is what enforces "at most one" (see `ShotStatus`'s
+    docstring for why).
+    """
+    queryset = ShotStatus.objects.filter(company=company, is_default=True)
+    if exclude_pk is not None:
+        queryset = queryset.exclude(pk=exclude_pk)
+    queryset.update(is_default=False)
+
+
+class ShotStatusListController(Controller[PydanticSerializer]):
+    """`GET/POST /api/v1/companies/<company_id>/shot-statuses/` - list and
+    create a company's shot statuses.
+    """
+
+    request: AuthenticatedHttpRequest[User]
+    auth = (access_token_auth,)
+
+    @modify(
+        summary="List a company's shot statuses",
+        description=(
+            "Return every shot status defined for the given company "
+            "(not paginated - this list is short and bounded), "
+            "optionally filtered by `search` against the name."
+        ),
+        response_description="The company's shot statuses.",
+        extra_responses=[
+            ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+        ],
+        tags=["Shot statuses"],
+    )
+    def get(
+        self,
+        parsed_path: Path[CompanyShotStatusesPath],
+        parsed_query: Query[ShotStatusListQuery],
+    ) -> ShotStatusListOut:
+        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+
+        queryset = ShotStatus.objects.filter(company=company)
+        if parsed_query.search:
+            queryset = queryset.filter(name__icontains=parsed_query.search)
+
+        return ShotStatusListOut(
+            items=[_serialize_shot_status(self.request, status) for status in queryset]
+        )
+
+    @modify(
+        status_code=HTTPStatus.CREATED,
+        summary="Create a shot status",
+        description=(
+            "Create a new shot status for the company. Setting "
+            "`is_default=True` automatically unsets the company's "
+            "previous default."
+        ),
+        response_description="The created shot status.",
+        extra_responses=[
+            ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+        ],
+        tags=["Shot statuses"],
+    )
+    def post(
+        self,
+        parsed_path: Path[CompanyShotStatusesPath],
+        parsed_body: Body[ShotStatusCreateIn],
+    ) -> ShotStatusOut:
+        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+
+        if ShotStatus.objects.filter(company=company, name=parsed_body.name).exists():
+            raise APIError(
+                self.format_error(
+                    "A shot status with this name already exists in this company.",
+                    loc=["name"],
+                    error_type=ErrorType.value_error,
+                ),
+                status_code=HTTPStatus.BAD_REQUEST,
+            )
+
+        if parsed_body.is_default:
+            _unset_other_defaults(company)
+
+        shot_status = ShotStatus.objects.create(
+            company=company,
+            name=parsed_body.name,
+            color=parsed_body.color,
+            order=parsed_body.order,
+            is_default=parsed_body.is_default,
+            created_by=self.request.user,
+            updated_by=self.request.user,
+        )
+        return _serialize_shot_status(self.request, shot_status)
+
+
+class ShotStatusDetailController(Controller[PydanticSerializer]):
+    """`GET/PATCH/DELETE /api/v1/shot-statuses/<id>/` - manage a single
+    shot status.
+    """
+
+    request: AuthenticatedHttpRequest[User]
+    auth = (access_token_auth,)
+
+    @modify(
+        summary="Get a shot status",
+        description="Return a single shot status by id.",
+        response_description="The requested shot status.",
+        extra_responses=[
+            ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+        ],
+        tags=["Shot statuses"],
+    )
+    def get(self, parsed_path: Path[ShotStatusPath]) -> ShotStatusOut:
+        shot_status = _get_shot_status_or_404(
+            self.request.user, parsed_path.shot_status_id
+        )
+        return _serialize_shot_status(self.request, shot_status)
+
+    @modify(
+        summary="Update a shot status",
+        description=(
+            "Partially update a shot status. Setting `is_default=True` "
+            "automatically unsets the company's previous default."
+        ),
+        response_description="The updated shot status.",
+        extra_responses=[
+            ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+        ],
+        tags=["Shot statuses"],
+    )
+    def patch(
+        self,
+        parsed_path: Path[ShotStatusPath],
+        parsed_body: Body[ShotStatusUpdateIn],
+    ) -> ShotStatusOut:
+        shot_status = _get_shot_status_or_404(
+            self.request.user, parsed_path.shot_status_id
+        )
+
+        update_fields = parsed_body.model_dump(exclude_unset=True)
+
+        if "name" in update_fields:
+            name_taken = (
+                ShotStatus.objects.filter(
+                    company=shot_status.company, name=update_fields["name"]
+                )
+                .exclude(pk=shot_status.pk)
+                .exists()
+            )
+            if name_taken:
+                raise APIError(
+                    self.format_error(
+                        "A shot status with this name already exists in this company.",
+                        loc=["name"],
+                        error_type=ErrorType.value_error,
+                    ),
+                    status_code=HTTPStatus.BAD_REQUEST,
+                )
+
+        if update_fields.get("is_default") is True:
+            _unset_other_defaults(shot_status.company, exclude_pk=shot_status.pk)
+
+        for field, value in update_fields.items():
+            setattr(shot_status, field, value)
+        if update_fields:
+            shot_status.updated_by = self.request.user
+            shot_status.save(update_fields=[*update_fields, "updated_by"])
+
+        return _serialize_shot_status(self.request, shot_status)
+
+    @modify(
+        status_code=HTTPStatus.NO_CONTENT,
+        summary="Delete a shot status",
+        description=(
+            "Permanently delete a shot status. Rejected with a 400 if "
+            "any shot still has this status, including when it's the "
+            "company's current default - deleting the default itself is "
+            "otherwise allowed and simply leaves the company without "
+            "one until another status is marked default."
+        ),
+        extra_responses=[
+            ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+        ],
+        tags=["Shot statuses"],
+    )
+    def delete(self, parsed_path: Path[ShotStatusPath]) -> None:
+        shot_status = _get_shot_status_or_404(
+            self.request.user, parsed_path.shot_status_id
+        )
+        try:
+            shot_status.delete()
+        except ProtectedError as exc:
+            raise APIError(
+                {"detail": ("Cannot delete this status while shots still use it.")},
+                status_code=HTTPStatus.BAD_REQUEST,
+            ) from exc
+        return None
+
+
 def _serialize_shot(request, shot: Shot) -> ShotOut:
     return ShotOut(
         id=shot.id,
         project_id=shot.project_id,
         group_ids=[group.id for group in shot.groups.all()],
+        status_id=shot.status_id,
         name=shot.name,
         rec_timecode=shot.rec_timecode,
         duration=shot.duration,
@@ -293,6 +543,68 @@ def _resolve_group_ids(
     return groups
 
 
+def _resolve_status_for_create(
+    controller, project: Project, status_id: int | None
+) -> ShotStatus:
+    """Resolve the status a new shot should get.
+
+    If `status_id` is given, it must belong to the project's company.
+    Otherwise, fall back to that company's `is_default` status - and if
+    it has none (e.g. it was deleted and never replaced), creation
+    fails with a 400 rather than silently picking one.
+    """
+    if status_id is not None:
+        try:
+            return ShotStatus.objects.get(company=project.company, pk=status_id)
+        except ShotStatus.DoesNotExist as exc:
+            raise APIError(
+                controller.format_error(
+                    f"Shot status with id={status_id} was not found in this "
+                    "project's company.",
+                    loc=["status_id"],
+                    error_type=ErrorType.value_error,
+                ),
+                status_code=HTTPStatus.BAD_REQUEST,
+            ) from exc
+
+    default_status = ShotStatus.objects.filter(
+        company=project.company, is_default=True
+    ).first()
+    if default_status is None:
+        raise APIError(
+            controller.format_error(
+                "This company has no default shot status - specify "
+                "status_id explicitly.",
+                loc=["status_id"],
+                error_type=ErrorType.value_error,
+            ),
+            status_code=HTTPStatus.BAD_REQUEST,
+        )
+    return default_status
+
+
+def _resolve_status_for_update(
+    controller, project: Project, status_id: int
+) -> ShotStatus:
+    """Resolve a status to switch an existing shot to via PATCH.
+
+    Unlike creation, there's no default fallback here - `status_id` is
+    only ever called with a value the client actually sent.
+    """
+    try:
+        return ShotStatus.objects.get(company=project.company, pk=status_id)
+    except ShotStatus.DoesNotExist as exc:
+        raise APIError(
+            controller.format_error(
+                f"Shot status with id={status_id} was not found in this "
+                "project's company.",
+                loc=["status_id"],
+                error_type=ErrorType.value_error,
+            ),
+            status_code=HTTPStatus.BAD_REQUEST,
+        ) from exc
+
+
 class ShotListController(Controller[PydanticSerializer]):
     """`GET/POST /api/v1/projects/<project_id>/shots/` - list every shot in
     a project (regardless of group) and create new shots.
@@ -346,7 +658,8 @@ class ShotListController(Controller[PydanticSerializer]):
             "Create a new shot within the project, optionally placing it "
             "into one or more existing shot groups via `group_ids`. A "
             "shot may belong to zero, one, or several groups - there is "
-            "no default group."
+            "no default group. `status_id` is optional and defaults to "
+            "the project's company's default shot status."
         ),
         response_description="The created shot.",
         extra_responses=[
@@ -373,9 +686,11 @@ class ShotListController(Controller[PydanticSerializer]):
             )
 
         groups = _resolve_group_ids(self, project, parsed_body.group_ids)
+        status = _resolve_status_for_create(self, project, parsed_body.status_id)
 
         shot = Shot.objects.create(
             project=project,
+            status=status,
             name=parsed_body.name,
             rec_timecode=parsed_body.rec_timecode,
             duration=parsed_body.duration,
@@ -457,8 +772,10 @@ class ShotDetailController(Controller[PydanticSerializer]):
         summary="Update a shot",
         description=(
             "Partially update a shot. `group_ids`, when present, replaces "
-            "the full set of group memberships. `name` cannot be changed "
-            "- it's immutable once set."
+            "the full set of group memberships. `status_id` switches the "
+            "shot to a different status from the same company - it "
+            "cannot be sent as null, since a shot always has one. `name` "
+            "cannot be changed - it's immutable once set."
         ),
         response_description="The updated shot.",
         extra_responses=[
@@ -474,11 +791,31 @@ class ShotDetailController(Controller[PydanticSerializer]):
     ) -> ShotOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
 
+        if (
+            "status_id" in parsed_body.model_fields_set
+            and parsed_body.status_id is None
+        ):
+            raise APIError(
+                self.format_error(
+                    "status_id cannot be null - a shot always has a status.",
+                    loc=["status_id"],
+                    error_type=ErrorType.value_error,
+                ),
+                status_code=HTTPStatus.BAD_REQUEST,
+            )
+
         update_fields = parsed_body.model_dump(
-            exclude={"group_ids"}, exclude_unset=True
+            exclude={"group_ids", "status_id"}, exclude_unset=True
         )
         for field, value in update_fields.items():
             setattr(shot, field, value)
+
+        if parsed_body.status_id is not None:
+            shot.status = _resolve_status_for_update(
+                self, shot.project, parsed_body.status_id
+            )
+            update_fields["status"] = shot.status
+
         if update_fields:
             shot.updated_by = self.request.user
             shot.save(update_fields=[*update_fields, "updated_by"])

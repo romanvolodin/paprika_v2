@@ -78,6 +78,89 @@ class ShotGroupUpdateIn(pydantic.BaseModel):
     name: str = pydantic.Field(min_length=1, max_length=255)
 
 
+class ShotStatusOut(pydantic.BaseModel):
+    """Public representation of a shot status."""
+
+    id: int = pydantic.Field(description="Internal numeric shot status identifier.")
+    company_id: int
+    name: str = pydantic.Field(description="Shot status name.")
+    color: str = pydantic.Field(description="6-digit hex color, e.g. #FF5733.")
+    order: int | None = pydantic.Field(
+        description=(
+            "Sort position among the primary workflow statuses, or null "
+            "for an exception/side status (e.g. cancelled, on hold)."
+        )
+    )
+    is_default: bool = pydantic.Field(
+        description="Whether new shots get this status when none is specified."
+    )
+    created_by: UserOut | None = pydantic.Field(
+        description="The user who created the status, or null if that user "
+        "has since been deleted."
+    )
+    updated_by: UserOut | None = pydantic.Field(
+        description="The user who last updated the status, or null if that "
+        "user has since been deleted."
+    )
+    created_at: dt.datetime
+    updated_at: dt.datetime
+
+
+class ShotStatusListQuery(pydantic.BaseModel):
+    """Query params for `GET /api/v1/companies/<id>/shot-statuses/`.
+
+    No pagination - a company's shot statuses are a short, bounded
+    list, same reasoning as `TaskType`.
+    """
+
+    search: str | None = pydantic.Field(
+        default=None,
+        description="Case-insensitive match against the status name.",
+    )
+
+
+class ShotStatusListOut(pydantic.BaseModel):
+    """The full list of a company's shot statuses (not paginated)."""
+
+    items: list[ShotStatusOut]
+
+
+class CompanyShotStatusesPath(pydantic.BaseModel):
+    """URL path parameters identifying a company's shot statuses collection."""
+
+    company_id: int = pydantic.Field(gt=0)
+
+
+class ShotStatusPath(pydantic.BaseModel):
+    """URL path parameters identifying a single shot status."""
+
+    shot_status_id: int = pydantic.Field(gt=0)
+
+
+class ShotStatusCreateIn(pydantic.BaseModel):
+    """Payload for `POST /api/v1/companies/<company_id>/shot-statuses/`.
+
+    `order` left unset means this status is an exception/side state,
+    not part of the primary ordered workflow - see `ShotStatus.order`.
+    Setting `is_default=True` automatically unsets the company's
+    previous default (there's always at most one).
+    """
+
+    name: str = pydantic.Field(min_length=1, max_length=255)
+    color: str = pydantic.Field(pattern=r"^#[0-9A-Fa-f]{6}$")
+    order: int | None = None
+    is_default: bool = False
+
+
+class ShotStatusUpdateIn(pydantic.BaseModel):
+    """Payload for `PATCH /api/v1/shot-statuses/<id>/`. All fields optional."""
+
+    name: str | None = pydantic.Field(default=None, min_length=1, max_length=255)
+    color: str | None = pydantic.Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    order: int | None = None
+    is_default: bool | None = None
+
+
 class ShotOut(pydantic.BaseModel):
     """Public representation of a shot."""
 
@@ -86,6 +169,7 @@ class ShotOut(pydantic.BaseModel):
     group_ids: list[int] = pydantic.Field(
         description="Ids of the shot groups this shot belongs to. May be empty."
     )
+    status_id: int = pydantic.Field(description="Id of the shot's current status.")
     name: str = pydantic.Field(description="Shot name. Immutable once set.")
     rec_timecode: int | None = pydantic.Field(
         description="Start position of the shot in the edit, in frames."
@@ -165,6 +249,14 @@ class ShotCreateIn(pydantic.BaseModel):
             "or fallback group."
         ),
     )
+    status_id: int | None = pydantic.Field(
+        default=None,
+        description=(
+            "Id of the shot's initial status, from the project's company. "
+            "Optional - defaults to the company's ShotStatus.is_default. "
+            "An error if omitted and the company has no default status."
+        ),
+    )
     rec_timecode: int | None = pydantic.Field(
         default=None,
         ge=0,
@@ -187,5 +279,13 @@ class ShotUpdateIn(pydantic.BaseModel):
     """
 
     group_ids: list[int] | None = None
+    status_id: int | None = pydantic.Field(
+        default=None,
+        description=(
+            "Id of a status from the project's company. Since `status` "
+            "can't be null on a shot, sending this as null is rejected - "
+            "omit the field entirely to leave the status unchanged."
+        ),
+    )
     rec_timecode: int | None = pydantic.Field(default=None, ge=0)
     duration: int | None = pydantic.Field(default=None, ge=1)

@@ -6,6 +6,8 @@ from .views import (
     ShotGroupListController,
     ShotGroupShotListController,
     ShotListController,
+    ShotStatusDetailController,
+    ShotStatusListController,
 )
 
 
@@ -21,6 +23,16 @@ router = Router(
             "shot-groups/<int:shot_group_id>/",
             ShotGroupDetailController.as_view(),
             name="shot-group-detail",
+        ),
+        path(
+            "companies/<int:company_id>/shot-statuses/",
+            ShotStatusListController.as_view(),
+            name="shot-status-list",
+        ),
+        path(
+            "shot-statuses/<int:shot_status_id>/",
+            ShotStatusDetailController.as_view(),
+            name="shot-status-detail",
         ),
         path(
             "projects/<int:project_id>/shots/",

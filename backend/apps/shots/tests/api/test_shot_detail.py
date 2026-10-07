@@ -156,6 +156,78 @@ class TestUpdateShot:
         assert response.status_code == 200
         assert response.json()["group_ids"] == [group.id]
 
+    def test_switches_to_a_different_status_in_the_same_company(
+        self,
+        auth_client,
+        auth_user,
+        shot_factory,
+        shot_status_factory,
+        project_membership_factory,
+        project,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        shot = shot_factory(project=project)
+        new_status = shot_status_factory(company=project.company, name="Blocked")
+
+        response = _patch_json(
+            auth_client,
+            f"/api/v1/shots/{shot.id}/",
+            {"status_id": new_status.id},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status_id"] == new_status.id
+
+    def test_rejects_null_status_id(
+        self, auth_client, auth_user, shot_factory, project_membership_factory
+    ):
+        shot = shot_factory()
+        project_membership_factory(user=auth_user, project=shot.project)
+
+        response = _patch_json(
+            auth_client, f"/api/v1/shots/{shot.id}/", {"status_id": None}
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        shot.refresh_from_db()
+        assert shot.status is not None
+
+    def test_rejects_a_status_from_a_different_company(
+        self,
+        auth_client,
+        auth_user,
+        shot_factory,
+        shot_status_factory,
+        project_membership_factory,
+        project,
+        company_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        shot = shot_factory(project=project)
+        foreign_status = shot_status_factory(company=company_factory())
+
+        response = _patch_json(
+            auth_client,
+            f"/api/v1/shots/{shot.id}/",
+            {"status_id": foreign_status.id},
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_omitting_status_id_leaves_status_untouched(
+        self, auth_client, auth_user, shot_factory, project_membership_factory
+    ):
+        shot = shot_factory()
+        project_membership_factory(user=auth_user, project=shot.project)
+        original_status_id = shot.status_id
+
+        response = _patch_json(
+            auth_client, f"/api/v1/shots/{shot.id}/", {"rec_timecode": 5}
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status_id"] == original_status_id
+
     def test_rejects_a_group_from_a_different_project(
         self,
         auth_client,

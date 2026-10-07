@@ -182,6 +182,84 @@ class TestCreateShot:
         shot = Shot.objects.get(id=response.json()["id"])
         assert shot.groups.count() == 2
 
+    def test_defaults_to_the_companys_default_status(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        default_status = project.company.shot_statuses.get(is_default=True)
+
+        response = _post_json(
+            auth_client, f"/api/v1/projects/{project.id}/shots/", {"name": "0010"}
+        )
+
+        assert response.json()["status_id"] == default_status.id
+
+    def test_creates_with_an_explicit_status_id(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        project_membership_factory,
+        shot_status_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        status = shot_status_factory(company=project.company, name="Blocked")
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/projects/{project.id}/shots/",
+            {"name": "0010", "status_id": status.id},
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        assert response.json()["status_id"] == status.id
+
+    def test_rejects_a_status_from_a_different_company(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        project_membership_factory,
+        shot_status_factory,
+        company_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        foreign_status = shot_status_factory(company=company_factory())
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/projects/{project.id}/shots/",
+            {"name": "0010", "status_id": foreign_status.id},
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert not Shot.objects.filter(project=project, name="0010").exists()
+
+    def test_rejects_an_unknown_status_id(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project)
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/projects/{project.id}/shots/",
+            {"name": "0010", "status_id": 999999},
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_fails_when_company_has_no_default_status_and_none_given(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        project.company.shot_statuses.update(is_default=False)
+
+        response = _post_json(
+            auth_client, f"/api/v1/projects/{project.id}/shots/", {"name": "0010"}
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
     def test_rejects_a_group_from_a_different_project(
         self,
         auth_client,
