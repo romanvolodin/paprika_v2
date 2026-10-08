@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "apps.projects",
     "apps.shots",
     "apps.users",
+    "apps.versions",
 ]
 
 MIDDLEWARE = [
@@ -96,5 +97,20 @@ STATIC_URL = "static/"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Versions (see `apps.versions`). These are plain environment variables for
+# now; the plan is to move them into per-project settings later.
+#
+# Max size of a single uploaded version file, in megabytes.
+VERSION_MAX_FILE_SIZE_MB = env.int("PAPRIKA_VERSION_MAX_FILE_SIZE_MB", 2048)
+# Which frame of a video becomes its thumbnail, as a fraction of the clip:
+# 0.0 = first frame, 0.5 = middle, 1.0 = last frame.
+VERSION_THUMB_FRAME_POSITION = env.float(
+    "PAPRIKA_VERSION_THUMB_FRAME_POSITION",
+    0.5,
+    validate=lambda value: 0.0 <= value <= 1.0,
+)
+# Longest side of a generated thumbnail, in pixels.
+VERSION_THUMB_MAX_SIZE = 320
 
 AUTH_USER_MODEL = "users.User"

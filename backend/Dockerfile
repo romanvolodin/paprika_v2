@@ -28,6 +28,7 @@ RUN apt-get update && apt-get upgrade -y \
     bash \
     brotli \
     curl \
+    ffmpeg \
     gettext \
     git \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \

@@ -11,6 +11,7 @@ from apps.companies.api.urls import router as companies_router
 from apps.projects.api.urls import router as projects_router
 from apps.shots.api.urls import router as shots_router
 from apps.users.api.urls import router as users_router
+from apps.versions.api.urls import router as versions_router
 
 
 api_router = Router("api/v1/")
@@ -19,6 +20,7 @@ api_router.include(companies_router)
 api_router.include(projects_router)
 api_router.include(shots_router)
 api_router.include(users_router)
+api_router.include(versions_router)
 
 schema = build_schema(api_router)
 

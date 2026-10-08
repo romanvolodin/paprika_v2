@@ -17,6 +17,7 @@ from apps.companies.tests.factories import CompanyFactory, CompanyMembershipFact
 from apps.projects.tests.factories import ProjectFactory, ProjectMembershipFactory
 from apps.shots.tests.factories import ShotFactory, ShotGroupFactory, ShotStatusFactory
 from apps.users.tests.factories import DEFAULT_PASSWORD, UserFactory
+from apps.versions.tests.factories import VersionFactory
 
 
 @pytest.fixture(autouse=True)
@@ -155,6 +156,18 @@ def shot_factory():
 def shot(shot_factory):
     """A single saved shot with default field values, no groups."""
     return shot_factory()
+
+
+@pytest.fixture
+def version_factory():
+    """The `VersionFactory` class itself, e.g. `version_factory(name=...)`."""
+    return VersionFactory
+
+
+@pytest.fixture
+def version(version_factory):
+    """A single saved image version with default field values."""
+    return version_factory()
 
 
 @pytest.fixture
