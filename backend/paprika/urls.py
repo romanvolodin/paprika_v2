@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from dmr.openapi import build_schema
-from dmr.openapi.views import OpenAPIJsonView, SwaggerView
+from dmr.openapi.views import OpenAPIJsonView, ScalarView
 from dmr.routing import Router
 
 from apps.auth.api.urls import router as auth_router
@@ -32,7 +32,7 @@ urlpatterns = [
         OpenAPIJsonView.as_view(schema),
         name="openapi",
     ),
-    path("api/v1/docs/", SwaggerView.as_view(schema), name="swagger"),
+    path("api/v1/docs/", ScalarView.as_view(schema), name="scalar"),
 ]
 
 if settings.DEBUG:
