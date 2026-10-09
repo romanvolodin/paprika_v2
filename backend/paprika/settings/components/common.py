@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.companies",
     "apps.projects",
     "apps.shots",
+    "apps.tasks",
     "apps.users",
     "apps.versions",
 ]

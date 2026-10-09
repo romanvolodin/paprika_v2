@@ -18,9 +18,11 @@
 GET/POST         /api/v1/companies/
 GET/PATCH/DELETE /api/v1/companies/<id>/
 
-# TaskType
+# TaskType и TaskStatus принадлежат компании
 GET/POST         /api/v1/companies/<id>/task-types/
 GET/PATCH/DELETE /api/v1/task-types/<id>/
+GET/POST         /api/v1/companies/<id>/task-statuses/
+GET/PATCH/DELETE /api/v1/task-statuses/<id>/
 
 # Project принадлежит компании
 GET/POST         /api/v1/companies/<id>/projects/
@@ -36,7 +38,15 @@ GET/POST         /api/v1/shot-groups/<id>/shots/
 GET              /api/v1/projects/<id>/shots/
 GET/PATCH/DELETE /api/v1/shots/<id>/
 
-# ShotTask принадлежит кадру
+# Task принадлежит проекту. Может существовать без кадров (самостоятельная
+# задача) и привязываться к нескольким кадрам через ShotTask
+GET/POST         /api/v1/projects/<id>/tasks/
+GET/PATCH/DELETE /api/v1/tasks/<id>/
+
+# ShotTask — привязка Task к кадру. Здесь же хранится работа над задачей на
+# этом кадре: статус, исполнитель, оценочное и фактическое время (в часах).
+# POST принимает task_id существующей задачи того же проекта; новая задача
+# на кадр — это два запроса (создать Task, затем привязать)
 GET/POST         /api/v1/shots/<id>/tasks/
 GET/PATCH/DELETE /api/v1/shot-tasks/<id>/
 
@@ -68,10 +78,14 @@ GET              /api/v1/projects/<id>/feed/
 
 Отклонения по ресурсам:
 
-- **Shots** — дополнительный фильтр `assigned_to=<user_id>` (или `assigned_to=me`). Фильтрует по кадрам, у которых есть ShotTask, назначенный на пользователя.
+- **Shots** — дополнительные фильтры:
+  - `task_type=<id типа задачи>` — кадры, у которых есть хотя бы одна задача этого типа (реализован, работает в обоих списках кадров);
+  - `assigned_to=<user_id>` (или `assigned_to=me`) — кадры, у которых есть ShotTask, назначенный на пользователя (пока не реализован).
+- **Tasks** — базовые параметры (`search` по названию и коду) плюс `type=<id типа задачи>`. Новые сверху.
+- **ShotTask** (`GET /shots/<id>/tasks/`) — без пагинации, отдаётся список целиком в порядке создания: на кадре задач единицы. Каждый элемент содержит данные ShotTask и вложенную задачу.
 - **Versions** — только базовые.
 - **Chat** — курсорная пагинация вместо `page/page_size`: `limit` (по умолчанию 50), `before=<message_id>` для подгрузки более старых сообщений. Первый запрос без `before` — последние `limit` сообщений в хронологическом порядке.
-- **TaskType** — без пагинации, отдается список целиком (опционально `search`).
+- **TaskType**, **TaskStatus** — без пагинации, отдается список целиком (опционально `search`).
 - **Feed** — на данный момент собирает события из таблиц chat/task/version (отдельная таблица лога появится в будущем). По умолчанию отдаются события за последние 3 дня, подгрузка по датам (`before_date=`), а не по id — так как источник смешанный (три таблицы с разными id), а окно уже задаётся датой.
 
   Фильтры:

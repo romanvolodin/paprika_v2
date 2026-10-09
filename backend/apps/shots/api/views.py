@@ -605,6 +605,18 @@ def _resolve_status_for_update(
         ) from exc
 
 
+def _filter_shots(queryset, query: ShotListQuery):
+    """Apply the filters shared by both shot list endpoints."""
+    if query.search:
+        queryset = queryset.filter(name__icontains=query.search)
+    if query.task_type is not None:
+        # `tasks` is the reverse side of `Task.shots` from `apps.tasks`;
+        # looked up by name so `apps.shots` doesn't import the tasks app.
+        # A shot with several tasks of that type would otherwise repeat.
+        queryset = queryset.filter(tasks__type_id=query.task_type).distinct()
+    return queryset
+
+
 class ShotListController(Controller[PydanticSerializer]):
     """`GET/POST /api/v1/projects/<project_id>/shots/` - list every shot in
     a project (regardless of group) and create new shots.
@@ -638,8 +650,7 @@ class ShotListController(Controller[PydanticSerializer]):
 
         queryset = Shot.objects.filter(project=project)
 
-        if parsed_query.search:
-            queryset = queryset.filter(name__icontains=parsed_query.search)
+        queryset = _filter_shots(queryset, parsed_query)
 
         paginator = Paginator(queryset, parsed_query.page_size)
         page = paginator.get_page(parsed_query.page)
@@ -735,8 +746,7 @@ class ShotGroupShotListController(Controller[PydanticSerializer]):
 
         queryset = Shot.objects.filter(groups=shot_group)
 
-        if parsed_query.search:
-            queryset = queryset.filter(name__icontains=parsed_query.search)
+        queryset = _filter_shots(queryset, parsed_query)
 
         paginator = Paginator(queryset, parsed_query.page_size)
         page = paginator.get_page(parsed_query.page)

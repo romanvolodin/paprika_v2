@@ -19,7 +19,8 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
-from apps.projects.models import Project, ProjectMembership
+from apps.projects.models import Project
+from apps.projects.permissions import require_can_write
 from apps.shots.api.views import _get_shot_or_404
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
@@ -88,24 +89,6 @@ def _get_version_or_404(user: User, version_id: int) -> Version:
             {"detail": f"Version with id={version_id} was not found."},
             status_code=HTTPStatus.NOT_FOUND,
         ) from exc
-
-
-def _require_can_write(user: User, project: Project) -> None:
-    """Reject read-only members (role `client`) with a 403.
-
-    Callers have already established that `user` is a member of
-    `project` (via `_get_shot_or_404` / `_get_version_or_404`, which 404
-    for non-members). Other role-based differences are intentionally not
-    modelled yet - they'll be added for shots and versions together.
-    """
-    is_client = ProjectMembership.objects.filter(
-        project=project, user=user, role=ProjectMembership.Role.CLIENT
-    ).exists()
-    if is_client:
-        raise APIError(
-            {"detail": "Your role in this project is read-only."},
-            status_code=HTTPStatus.FORBIDDEN,
-        )
 
 
 def _discard_files(version: Version) -> None:
@@ -185,7 +168,7 @@ class VersionListController(Controller[PydanticSerializer]):
         parsed_file_metadata: FileMetadata[VersionFiles],
     ) -> VersionOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
-        _require_can_write(self.request.user, shot.project)
+        require_can_write(self.request.user, shot.project)
 
         upload = self.request.FILES["source"]
 
@@ -307,6 +290,6 @@ class VersionDetailController(Controller[PydanticSerializer]):
     )
     def delete(self, parsed_path: Path[VersionPath]) -> None:
         version = _get_version_or_404(self.request.user, parsed_path.version_id)
-        _require_can_write(self.request.user, version.project)
+        require_can_write(self.request.user, version.project)
         version.delete()
         return None

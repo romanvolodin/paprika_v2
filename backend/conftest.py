@@ -16,6 +16,12 @@ import pytest
 from apps.companies.tests.factories import CompanyFactory, CompanyMembershipFactory
 from apps.projects.tests.factories import ProjectFactory, ProjectMembershipFactory
 from apps.shots.tests.factories import ShotFactory, ShotGroupFactory, ShotStatusFactory
+from apps.tasks.tests.factories import (
+    ShotTaskFactory,
+    TaskFactory,
+    TaskStatusFactory,
+    TaskTypeFactory,
+)
 from apps.users.tests.factories import DEFAULT_PASSWORD, UserFactory
 from apps.versions.tests.factories import VersionFactory
 
@@ -156,6 +162,54 @@ def shot_factory():
 def shot(shot_factory):
     """A single saved shot with default field values, no groups."""
     return shot_factory()
+
+
+@pytest.fixture
+def task_type_factory():
+    """The `TaskTypeFactory` class itself, e.g. `task_type_factory(name=...)`."""
+    return TaskTypeFactory
+
+
+@pytest.fixture
+def task_type(task_type_factory):
+    """A single saved task type with default field values."""
+    return task_type_factory()
+
+
+@pytest.fixture
+def task_status_factory():
+    """The `TaskStatusFactory` class itself, e.g. `task_status_factory(name=...)`."""
+    return TaskStatusFactory
+
+
+@pytest.fixture
+def task_status(task_status_factory):
+    """A single saved task status with default field values."""
+    return task_status_factory()
+
+
+@pytest.fixture
+def task_factory():
+    """The `TaskFactory` class itself, e.g. `task_factory(name=...)`."""
+    return TaskFactory
+
+
+@pytest.fixture
+def task(task_factory):
+    """A single saved standalone task with default field values."""
+    return task_factory()
+
+
+@pytest.fixture
+def shot_task_factory():
+    """The `ShotTaskFactory` class itself, e.g. `shot_task_factory(shot=...)`."""
+    return ShotTaskFactory
+
+
+@pytest.fixture
+def shot_task(shot_task_factory):
+    """A single saved task placed on a shot, with default field values."""
+    return shot_task_factory()
 
 
 @pytest.fixture
