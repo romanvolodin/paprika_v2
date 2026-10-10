@@ -67,6 +67,122 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/shots/{shot_id}/chat/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a shot's chat messages
+         * @description Cursor pagination, messages come in chronological order. Without `before`/`around` the last `limit` messages are returned. `before=<id>` loads the `limit` messages older than that message. `around=<id>` returns a window around the message (to jump to a quote). Deleted messages are not listed. System messages (events on the shot) are in the same list.
+         */
+        get: operations["getChatlistcontrollerApiV1ShotsShotIdChat"];
+        put?: never;
+        /**
+         * Send a chat message
+         * @description Create a user message. It needs text, at least one attachment or at least one version (or several). Files are uploaded beforehand via `POST /shots/<id>/chat/attachments/` and passed by id. `reply_to_id` must be a user message of the same shot. `version_ids` must be versions of the same shot. Not available to members with the read-only `client` role.
+         */
+        post: operations["postChatlistcontrollerApiV1ShotsShotIdChat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shots/{shot_id}/chat/attachments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload a chat attachment
+         * @description Upload a file as `multipart/form-data` with a single required file field `file`. Any file type is accepted; the size limit is configurable (`PAPRIKA_CHAT_ATTACHMENT_MAX_FILE_SIZE_MB`, 100 by default, 413 otherwise). The returned `id` goes into `attachment_ids` of a new message. Until then the file can be removed with `DELETE /chat/attachments/<id>/`. Not available to members with the read-only `client` role.
+         */
+        post: operations["postChatattachmentuploadcontrollerApiV1ShotsShotIdChatAttachments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/attachments/{attachment_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove an uploaded chat attachment
+         * @description Remove a file that was uploaded but not yet sent. Only its uploader can do it. A file that is already part of a message can't be removed this way (409) - delete the message instead.
+         */
+        delete: operations["deleteChatattachmentdetailcontrollerApiV1ChatAttachmentsAttachmentId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/{message_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a chat message
+         * @description Return a single message by id. Deleted messages are 404.
+         */
+        get: operations["getChatmessagedetailcontrollerApiV1ChatMessageId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a chat message
+         * @description Delete your own user message. The message disappears from the chat; its text, files, version links and reactions are removed. Replies to it stay and show it as deleted. System messages can't be deleted. Not available to members with the read-only `client` role.
+         */
+        delete: operations["deleteChatmessagedetailcontrollerApiV1ChatMessageId"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit a chat message
+         * @description Change the text of your own user message. Attachments, versions and the quoted message can't be changed. The text can only become empty if the message has an attachment or a version. `edited_at` is set when the text actually changed. System messages can't be edited. Not available to members with the read-only `client` role.
+         */
+        patch: operations["patchChatmessagedetailcontrollerApiV1ChatMessageId"];
+        trace?: never;
+    };
+    "/api/v1/chat/{message_id}/reactions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put a reaction on a message
+         * @description Put an emoji on a message (a user or a system one, not a deleted one). Putting the same emoji again changes nothing. Not available to members with the read-only `client` role.
+         */
+        put: operations["putChatreactioncontrollerApiV1ChatMessageIdReactions"];
+        post?: never;
+        /**
+         * Remove your reaction from a message
+         * @description Remove your own emoji from a message; the emoji goes in the `emoji` query param (a DELETE request has no body). Removing a reaction that isn't there changes nothing. Not available to members with the read-only `client` role.
+         */
+        delete: operations["deleteChatreactioncontrollerApiV1ChatMessageIdReactions"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/": {
         parameters: {
             query?: never;
@@ -182,7 +298,7 @@ export interface paths {
         put?: never;
         /**
          * Create a project
-         * @description Create a new project within the company. The creator is automatically added as an `admin` member.
+         * @description Create a new project within the company, optionally with a cover image. Send as `multipart/form-data`: regular fields for `name`, `code`, `description`, `start_date`, `deadline`, plus an optional `cover` file field. The creator is automatically added as an `admin` member.
          */
         post: operations["postProjectlistcontrollerApiV1CompaniesCompanyIdProjects"];
         delete?: never;
@@ -214,7 +330,7 @@ export interface paths {
         head?: never;
         /**
          * Update a project
-         * @description Partially update a project. Only fields present are changed. `code` cannot be changed - it's immutable once set.
+         * @description Partially update a project, optionally replacing or removing its cover in the same request. Send as `multipart/form-data`: any of `name`, `description`, `start_date`, `deadline`, `is_active`, `remove_cover`, plus an optional `cover` file field. Only fields actually present are changed. `code` cannot be changed - it's immutable once set.
          */
         patch: operations["patchProjectdetailcontrollerApiV1ProjectsProjectId"];
         trace?: never;
@@ -265,6 +381,390 @@ export interface paths {
          * @description Change the role of an existing project member.
          */
         patch: operations["patchProjectmemberdetailcontrollerApiV1ProjectsProjectIdMembersUserId"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/shot-groups/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a project's shot groups
+         * @description Return a paginated list of shot groups within the given project, optionally filtered by `search` against the name.
+         */
+        get: operations["getShotgrouplistcontrollerApiV1ProjectsProjectIdShotGroups"];
+        put?: never;
+        /**
+         * Create a shot group
+         * @description Create a new shot group within the project.
+         */
+        post: operations["postShotgrouplistcontrollerApiV1ProjectsProjectIdShotGroups"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shot-groups/{shot_group_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a shot group
+         * @description Return a single shot group by id.
+         */
+        get: operations["getShotgroupdetailcontrollerApiV1ShotGroupsShotGroupId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a shot group
+         * @description Permanently delete a shot group.
+         */
+        delete: operations["deleteShotgroupdetailcontrollerApiV1ShotGroupsShotGroupId"];
+        options?: never;
+        head?: never;
+        /**
+         * Rename a shot group
+         * @description Update a shot group's name.
+         */
+        patch: operations["patchShotgroupdetailcontrollerApiV1ShotGroupsShotGroupId"];
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/shot-statuses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a company's shot statuses
+         * @description Return every shot status defined for the given company (not paginated - this list is short and bounded), optionally filtered by `search` against the name.
+         */
+        get: operations["getShotstatuslistcontrollerApiV1CompaniesCompanyIdShotStatuses"];
+        put?: never;
+        /**
+         * Create a shot status
+         * @description Create a new shot status for the company. Setting `is_default=True` automatically unsets the company's previous default.
+         */
+        post: operations["postShotstatuslistcontrollerApiV1CompaniesCompanyIdShotStatuses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shot-statuses/{shot_status_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a shot status
+         * @description Return a single shot status by id.
+         */
+        get: operations["getShotstatusdetailcontrollerApiV1ShotStatusesShotStatusId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a shot status
+         * @description Permanently delete a shot status. Rejected with a 400 if any shot still has this status, including when it's the company's current default - deleting the default itself is otherwise allowed and simply leaves the company without one until another status is marked default.
+         */
+        delete: operations["deleteShotstatusdetailcontrollerApiV1ShotStatusesShotStatusId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a shot status
+         * @description Partially update a shot status. Setting `is_default=True` automatically unsets the company's previous default.
+         */
+        patch: operations["patchShotstatusdetailcontrollerApiV1ShotStatusesShotStatusId"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/shots/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a project's shots
+         * @description Return a paginated list of every shot in the given project, regardless of which group(s) it belongs to, optionally filtered by `search` against the name.
+         */
+        get: operations["getShotlistcontrollerApiV1ProjectsProjectIdShots"];
+        put?: never;
+        /**
+         * Create a shot
+         * @description Create a new shot within the project, optionally placing it into one or more existing shot groups via `group_ids`. A shot may belong to zero, one, or several groups - there is no default group. `status_id` is optional and defaults to the project's company's default shot status.
+         */
+        post: operations["postShotlistcontrollerApiV1ProjectsProjectIdShots"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shot-groups/{shot_group_id}/shots/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a shot group's shots
+         * @description Return a paginated list of shots belonging to the given group, optionally filtered by `search` against the name.
+         */
+        get: operations["getShotgroupshotlistcontrollerApiV1ShotGroupsShotGroupIdShots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shots/{shot_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a shot
+         * @description Return a single shot by id.
+         */
+        get: operations["getShotdetailcontrollerApiV1ShotsShotId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a shot
+         * @description Permanently delete a shot.
+         */
+        delete: operations["deleteShotdetailcontrollerApiV1ShotsShotId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a shot
+         * @description Partially update a shot. `group_ids`, when present, replaces the full set of group memberships. `status_id` switches the shot to a different status from the same company - it cannot be sent as null, since a shot always has one. `name` cannot be changed - it's immutable once set.
+         */
+        patch: operations["patchShotdetailcontrollerApiV1ShotsShotId"];
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/task-types/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a company's task types
+         * @description Return every task type defined for the given company (not paginated - this list is short and bounded), optionally filtered by `search` against the name or abbreviation.
+         */
+        get: operations["getTasktypelistcontrollerApiV1CompaniesCompanyIdTaskTypes"];
+        put?: never;
+        /**
+         * Create a task type
+         * @description Create a new task type for the company. The name and the abbreviation must each be unique within the company (409 otherwise).
+         */
+        post: operations["postTasktypelistcontrollerApiV1CompaniesCompanyIdTaskTypes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/task-types/{task_type_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a task type
+         * @description Return a single task type by id.
+         */
+        get: operations["getTasktypedetailcontrollerApiV1TaskTypesTaskTypeId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a task type
+         * @description Permanently delete a task type. Rejected with a 409 while any task still has this type - move those tasks to another type first.
+         */
+        delete: operations["deleteTasktypedetailcontrollerApiV1TaskTypesTaskTypeId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a task type
+         * @description Partially update a task type. Changing the abbreviation doesn't change the codes of tasks that already exist.
+         */
+        patch: operations["patchTasktypedetailcontrollerApiV1TaskTypesTaskTypeId"];
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/task-statuses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a company's task statuses
+         * @description Return every task status defined for the given company (not paginated - this list is short and bounded), optionally filtered by `search` against the name.
+         */
+        get: operations["getTaskstatuslistcontrollerApiV1CompaniesCompanyIdTaskStatuses"];
+        put?: never;
+        /**
+         * Create a task status
+         * @description Create a new task status for the company. The name must be unique within the company (409 otherwise). Setting `is_default=True` automatically unsets the company's previous default.
+         */
+        post: operations["postTaskstatuslistcontrollerApiV1CompaniesCompanyIdTaskStatuses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/task-statuses/{task_status_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a task status
+         * @description Return a single task status by id.
+         */
+        get: operations["getTaskstatusdetailcontrollerApiV1TaskStatusesTaskStatusId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a task status
+         * @description Permanently delete a task status. Rejected with a 409 while any shot task still has this status, including when it's the company's current default - deleting the default itself is otherwise allowed and simply leaves the company without one until another status is marked default.
+         */
+        delete: operations["deleteTaskstatusdetailcontrollerApiV1TaskStatusesTaskStatusId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a task status
+         * @description Partially update a task status. Setting `is_default=True` automatically unsets the company's previous default.
+         */
+        patch: operations["patchTaskstatusdetailcontrollerApiV1TaskStatusesTaskStatusId"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a project's tasks
+         * @description Return a paginated list of the project's tasks, newest first, optionally filtered by `search` against the name or code and by `type` (a task type id).
+         */
+        get: operations["getTasklistcontrollerApiV1ProjectsProjectIdTasks"];
+        put?: never;
+        /**
+         * Create a task
+         * @description Create a new task in the project. It gets a generated `code` (the type's abbreviation plus four digits) and starts out standalone - place it on shots with `POST /api/v1/shots/<id>/tasks/`. Not available to members with the read-only `client` role.
+         */
+        post: operations["postTasklistcontrollerApiV1ProjectsProjectIdTasks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{task_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a task
+         * @description Return a single task by id.
+         */
+        get: operations["getTaskdetailcontrollerApiV1TasksTaskId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a task
+         * @description Permanently delete a task together with its placements on shots (and the status, assignee and hours tracked there). Not available to members with the read-only `client` role.
+         */
+        delete: operations["deleteTaskdetailcontrollerApiV1TasksTaskId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a task
+         * @description Partially update a task's name, description or type. The task's `code` never changes, not even when its type does. Not available to members with the read-only `client` role.
+         */
+        patch: operations["patchTaskdetailcontrollerApiV1TasksTaskId"];
+        trace?: never;
+    };
+    "/api/v1/shots/{shot_id}/tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a shot's tasks
+         * @description Return every task placed on the shot, in the order they were placed (not paginated - a shot has only a few). Each item carries the tracking of the work on this shot (status, assignee, hours) and the nested task.
+         */
+        get: operations["getShottasklistcontrollerApiV1ShotsShotIdTasks"];
+        put?: never;
+        /**
+         * Place a task on a shot
+         * @description Place an existing task (`task_id`) of the shot's project on the shot. `status_id` defaults to the company's default task status; `assignee_id` must be a member of the project. A task can be placed on a given shot only once (409 otherwise). Not available to members with the read-only `client` role.
+         */
+        post: operations["postShottasklistcontrollerApiV1ShotsShotIdTasks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shot-tasks/{shot_task_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a shot task
+         * @description Return a single shot task by id.
+         */
+        get: operations["getShottaskdetailcontrollerApiV1ShotTasksShotTaskId"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove a task from a shot
+         * @description Remove the task from the shot, discarding the tracking recorded for it there. The task itself stays. Not available to members with the read-only `client` role.
+         */
+        delete: operations["deleteShottaskdetailcontrollerApiV1ShotTasksShotTaskId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a shot task
+         * @description Partially update the tracking of a task on a shot: status, assignee (null to unassign) and estimated/actual hours (null to clear). The task and the shot can't be changed. Not available to members with the read-only `client` role.
+         */
+        patch: operations["patchShottaskdetailcontrollerApiV1ShotTasksShotTaskId"];
         trace?: never;
     };
     "/api/v1/users/": {
@@ -339,10 +839,98 @@ export interface paths {
         patch: operations["patchUserdetailcontrollerApiV1UsersUserId"];
         trace?: never;
     };
+    "/api/v1/shots/{shot_id}/versions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a shot's versions
+         * @description Return a paginated list of the shot's versions, newest first.
+         */
+        get: operations["getVersionlistcontrollerApiV1ShotsShotIdVersions"];
+        put?: never;
+        /**
+         * Upload a version
+         * @description Upload a new version of the shot as `multipart/form-data` with a single required file field `source` (`.mp4` with h264 video, `.jpg` or `.png`). The version's `name` is the file name without its extension and must be unique within the project (409 otherwise). Its metadata and thumbnail are produced while the request is being handled, so the response arrives only after the file has been processed. Not available to members with the read-only `client` role.
+         */
+        post: operations["postVersionlistcontrollerApiV1ShotsShotIdVersions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/versions/{version_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a version
+         * @description Return a single version by id.
+         */
+        get: operations["getVersiondetailcontrollerApiV1VersionsVersionId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a version
+         * @description Permanently delete a version and its files. Its name is freed up for a new upload. Not available to members with the read-only `client` role.
+         */
+        delete: operations["deleteVersiondetailcontrollerApiV1VersionsVersionId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AttachmentOut
+         * @description A file attached to a chat message (or uploaded and not sent yet).
+         */
+        AttachmentOut: {
+            /** Id */
+            id: number;
+            /**
+             * Url
+             * @description Absolute URL of the file.
+             */
+            url: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Size
+             * @description In bytes.
+             */
+            size: number;
+            /** Content Type */
+            content_type: string;
+        };
+        /** ChatListOut */
+        ChatListOut: {
+            /**
+             * Items
+             * @description In chronological order (oldest first).
+             */
+            items: components["schemas"]["MessageOut"][];
+            /**
+             * Has Older
+             * @description There are older messages.
+             */
+            has_older: boolean;
+            /**
+             * Has Newer
+             * @description There are newer messages.
+             */
+            has_newer: boolean;
+        };
         /**
          * CompanyCreateIn
          * @description Payload for `POST /api/v1/companies/`.
@@ -509,6 +1097,94 @@ export interface components {
              */
             password: string;
         };
+        /** MessageCreateIn */
+        MessageCreateIn: {
+            /**
+             * Text
+             * @description Surrounding whitespace is trimmed. The length limit is configurable (`PAPRIKA_CHAT_MESSAGE_MAX_LENGTH`, 2000 by default).
+             * @default
+             */
+            text: string;
+            /**
+             * Reply To Id
+             * @description A user message of the same shot to reply to.
+             */
+            reply_to_id?: number | null;
+            /**
+             * Version Ids
+             * @description Versions of the same shot the message refers to.
+             */
+            version_ids?: number[];
+            /**
+             * Attachment Ids
+             * @description Ids of files uploaded earlier by the same user.
+             */
+            attachment_ids?: number[];
+        };
+        /**
+         * MessageOut
+         * @description Public representation of a chat message.
+         */
+        MessageOut: {
+            /** Id */
+            id: number;
+            /** Shot Id */
+            shot_id: number;
+            /**
+             * Type
+             * @description `user` or `system`.
+             */
+            type: string;
+            /**
+             * Text
+             * @description Empty for system messages.
+             */
+            text: string;
+            /**
+             * Event
+             * @description `version_uploaded`, `task_added`, `status_changed` or `assignee_changed` for system messages, null for user messages.
+             */
+            event: string | null;
+            /**
+             * Payload
+             * @description Details of the event as they were when it happened (ids and names); empty for user messages.
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+            reply_to: components["schemas"]["ReplyToOut"] | null;
+            /**
+             * Versions
+             * @description Versions of the shot the message refers to.
+             */
+            versions: components["schemas"]["VersionOut"][];
+            /** Attachments */
+            attachments: components["schemas"]["AttachmentOut"][];
+            /** Reactions */
+            reactions: components["schemas"]["ReactionSummaryOut"][];
+            /**
+             * Edited At
+             * @description Set when the text was edited, null otherwise.
+             */
+            edited_at: string | null;
+            /** @description The author (for a system message - the person who did the action), or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** MessageUpdateIn */
+        MessageUpdateIn: {
+            /** Text */
+            text: string;
+        };
         /**
          * ProjectCreateIn
          * @description Payload for `POST /api/v1/companies/<company_id>/projects/`.
@@ -673,12 +1349,700 @@ export interface components {
             deadline?: string | null;
             /** Is Active */
             is_active?: boolean | null;
+            /**
+             * Remove Cover
+             * @description Set to true to delete the current cover. Ignored if a new `cover` file is also sent in the same request.
+             * @default false
+             */
+            remove_cover: boolean;
+        };
+        /** ReactionIn */
+        ReactionIn: {
+            /**
+             * Emoji
+             * @description Any emoji, no spaces.
+             */
+            emoji: string;
+        };
+        /**
+         * ReactionSummaryOut
+         * @description One emoji on a message, collapsed over everybody who put it.
+         *
+         *     There is no counter on purpose: it is the length of `user_ids`.
+         */
+        ReactionSummaryOut: {
+            /** Emoji */
+            emoji: string;
+            /**
+             * User Ids
+             * @description Who put the emoji, in the order they did it.
+             */
+            user_ids: number[];
+        };
+        /**
+         * ReactionsOut
+         * @description All reactions of a message, in the order they first appeared.
+         */
+        ReactionsOut: {
+            /** Reactions */
+            reactions: components["schemas"]["ReactionSummaryOut"][];
+        };
+        /**
+         * ReplyToOut
+         * @description The message a message replies to, as a short quote.
+         */
+        ReplyToOut: {
+            /** Id */
+            id: number;
+            author: components["schemas"]["UserOut"] | null;
+            /**
+             * Text
+             * @description The first 200 characters of the quoted text. Empty if the quoted message was deleted.
+             */
+            text: string;
+            /** Deleted */
+            deleted: boolean;
         };
         /**
          * Role
          * @enum {string}
          */
         Role: "admin" | "producer" | "coordinator" | "executor" | "freelancer" | "client";
+        /**
+         * ShotCreateIn
+         * @description Payload for `POST /api/v1/projects/<project_id>/shots/`.
+         *
+         *     This is the only place a shot is created - there's no corresponding
+         *     create on the shot-group-scoped collection, to avoid two routes with
+         *     subtly different creation semantics.
+         */
+        ShotCreateIn: {
+            /** Name */
+            name: string;
+            /**
+             * Group Ids
+             * @description Ids of shot groups (within the same project) to add this shot to. Optional - a shot may belong to none; there is no default or fallback group.
+             */
+            group_ids?: number[];
+            /**
+             * Status Id
+             * @description Id of the shot's initial status, from the project's company. Optional - defaults to the company's ShotStatus.is_default. An error if omitted and the company has no default status.
+             */
+            status_id?: number | null;
+            /**
+             * Rec Timecode
+             * @description Start position of the shot in the edit, in frames.
+             */
+            rec_timecode?: number | null;
+            /**
+             * Duration
+             * @description Length of the shot, in frames.
+             */
+            duration?: number | null;
+        };
+        /**
+         * ShotGroupCreateIn
+         * @description Payload for `POST /api/v1/projects/<project_id>/shot-groups/`.
+         */
+        ShotGroupCreateIn: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * ShotGroupListOut
+         * @description A page of shot groups within a project.
+         */
+        ShotGroupListOut: {
+            /** Items */
+            items: components["schemas"]["ShotGroupOut"][];
+            /**
+             * Total
+             * @description Total number of shot groups matching filters.
+             */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /**
+         * ShotGroupOut
+         * @description Public representation of a shot group.
+         */
+        ShotGroupOut: {
+            /**
+             * Id
+             * @description Internal numeric shot group identifier.
+             */
+            id: number;
+            /** Project Id */
+            project_id: number;
+            /**
+             * Name
+             * @description Shot group name.
+             */
+            name: string;
+            /** @description The user who created the shot group, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated the shot group, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ShotGroupUpdateIn
+         * @description Payload for `PATCH /api/v1/shot-groups/<id>/`.
+         *
+         *     `name` is the only field there is, so unlike `ProjectUpdateIn` this
+         *     isn't a partial-update schema - it's always required.
+         */
+        ShotGroupUpdateIn: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * ShotListOut
+         * @description A page of shots.
+         */
+        ShotListOut: {
+            /** Items */
+            items: components["schemas"]["ShotOut"][];
+            /**
+             * Total
+             * @description Total number of shots matching filters.
+             */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /**
+         * ShotOut
+         * @description Public representation of a shot.
+         */
+        ShotOut: {
+            /**
+             * Id
+             * @description Internal numeric shot identifier.
+             */
+            id: number;
+            /** Project Id */
+            project_id: number;
+            /**
+             * Group Ids
+             * @description Ids of the shot groups this shot belongs to. May be empty.
+             */
+            group_ids: number[];
+            /**
+             * Status Id
+             * @description Id of the shot's current status.
+             */
+            status_id: number;
+            /**
+             * Name
+             * @description Shot name. Immutable once set.
+             */
+            name: string;
+            /**
+             * Rec Timecode
+             * @description Start position of the shot in the edit, in frames.
+             */
+            rec_timecode: number | null;
+            /**
+             * Duration
+             * @description Length of the shot, in frames.
+             */
+            duration: number | null;
+            /** @description The user who created the shot, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated the shot, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ShotStatusCreateIn
+         * @description Payload for `POST /api/v1/companies/<company_id>/shot-statuses/`.
+         *
+         *     `order` left unset means this status is an exception/side state,
+         *     not part of the primary ordered workflow - see `ShotStatus.order`.
+         *     Setting `is_default=True` automatically unsets the company's
+         *     previous default (there's always at most one).
+         */
+        ShotStatusCreateIn: {
+            /** Name */
+            name: string;
+            /** Color */
+            color: string;
+            /** Order */
+            order?: number | null;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+        };
+        /**
+         * ShotStatusListOut
+         * @description The full list of a company's shot statuses (not paginated).
+         */
+        ShotStatusListOut: {
+            /** Items */
+            items: components["schemas"]["ShotStatusOut"][];
+        };
+        /**
+         * ShotStatusOut
+         * @description Public representation of a shot status.
+         */
+        ShotStatusOut: {
+            /**
+             * Id
+             * @description Internal numeric shot status identifier.
+             */
+            id: number;
+            /** Company Id */
+            company_id: number;
+            /**
+             * Name
+             * @description Shot status name.
+             */
+            name: string;
+            /**
+             * Color
+             * @description 6-digit hex color, e.g. #FF5733.
+             */
+            color: string;
+            /**
+             * Order
+             * @description Sort position among the primary workflow statuses, or null for an exception/side status (e.g. cancelled, on hold).
+             */
+            order: number | null;
+            /**
+             * Is Default
+             * @description Whether new shots get this status when none is specified.
+             */
+            is_default: boolean;
+            /** @description The user who created the status, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated the status, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ShotStatusUpdateIn
+         * @description Payload for `PATCH /api/v1/shot-statuses/<id>/`. All fields optional.
+         */
+        ShotStatusUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Color */
+            color?: string | null;
+            /** Order */
+            order?: number | null;
+            /** Is Default */
+            is_default?: boolean | null;
+        };
+        /**
+         * ShotTaskCreateIn
+         * @description Payload for `POST /api/v1/shots/<shot_id>/tasks/`.
+         */
+        ShotTaskCreateIn: {
+            /**
+             * Task Id
+             * @description Id of an existing task of the same project as the shot.
+             */
+            task_id: number;
+            /**
+             * Status Id
+             * @description Id of a status of the project's company. Defaults to the company's default task status.
+             */
+            status_id?: number | null;
+            /**
+             * Assignee Id
+             * @description Id of a member of the project, or null for nobody.
+             */
+            assignee_id?: number | null;
+            /** Estimated Hours */
+            estimated_hours?: number | string | null;
+            /** Actual Hours */
+            actual_hours?: number | string | null;
+        };
+        /**
+         * ShotTaskListOut
+         * @description Every task placed on a shot, in creation order (not paginated).
+         */
+        ShotTaskListOut: {
+            /** Items */
+            items: components["schemas"]["ShotTaskOut"][];
+        };
+        /**
+         * ShotTaskOut
+         * @description A task placed on a shot, with the tracking of the work done there.
+         */
+        ShotTaskOut: {
+            /** Id */
+            id: number;
+            /** Shot Id */
+            shot_id: number;
+            task: components["schemas"]["TaskOut"];
+            /**
+             * Status Id
+             * @description Id of the task's current status on this shot.
+             */
+            status_id: number;
+            /** @description Who is doing the task on this shot, or null. */
+            assignee: components["schemas"]["UserOut"] | null;
+            /**
+             * Estimated Hours
+             * @description Estimated time in hours, or null if not set.
+             */
+            estimated_hours: number | null;
+            /**
+             * Actual Hours
+             * @description Time actually spent in hours, or null if not set.
+             */
+            actual_hours: number | null;
+            /** @description The user who placed the task on the shot, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated this record, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ShotTaskUpdateIn
+         * @description Payload for `PATCH /api/v1/shot-tasks/<id>/`. All fields optional.
+         *
+         *     The task and the shot can't be changed; delete the shot task and
+         *     create a new one instead.
+         */
+        ShotTaskUpdateIn: {
+            /**
+             * Status Id
+             * @description Id of a status of the project's company. Since `status` can't be null, sending this as null is rejected - omit the field entirely to leave the status unchanged.
+             */
+            status_id?: number | null;
+            /**
+             * Assignee Id
+             * @description Id of a member of the project, or null to unassign.
+             */
+            assignee_id?: number | null;
+            /** Estimated Hours */
+            estimated_hours?: number | string | null;
+            /** Actual Hours */
+            actual_hours?: number | string | null;
+        };
+        /**
+         * ShotUpdateIn
+         * @description Payload for `PATCH /api/v1/shots/<id>/`. All fields are optional.
+         *
+         *     `name` is intentionally absent - like `Project.code`, it's immutable
+         *     once the shot is created. `group_ids`, when present, *replaces* the
+         *     full set of group memberships (it's not a merge/add) - send the
+         *     complete desired list.
+         */
+        ShotUpdateIn: {
+            /** Group Ids */
+            group_ids?: number[] | null;
+            /**
+             * Status Id
+             * @description Id of a status from the project's company. Since `status` can't be null on a shot, sending this as null is rejected - omit the field entirely to leave the status unchanged.
+             */
+            status_id?: number | null;
+            /** Rec Timecode */
+            rec_timecode?: number | null;
+            /** Duration */
+            duration?: number | null;
+        };
+        /**
+         * TaskCreateIn
+         * @description Payload for `POST /api/v1/projects/<project_id>/tasks/`.
+         *
+         *     The task starts out standalone; place it on shots with
+         *     `POST /api/v1/shots/<id>/tasks/`.
+         */
+        TaskCreateIn: {
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Type Id
+             * @description Id of a task type of the project's company.
+             */
+            type_id: number;
+        };
+        /**
+         * TaskListOut
+         * @description A page of tasks, newest first.
+         */
+        TaskListOut: {
+            /** Items */
+            items: components["schemas"]["TaskOut"][];
+            /**
+             * Total
+             * @description Total number of tasks matching filters.
+             */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /**
+         * TaskOut
+         * @description Public representation of a task.
+         */
+        TaskOut: {
+            /** Id */
+            id: number;
+            /** Project Id */
+            project_id: number;
+            /**
+             * Code
+             * @description Public identifier: the type's abbreviation plus four digits, e.g. `CLN4821`. Unique within the project and never changes.
+             */
+            code: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /**
+             * Type Id
+             * @description Id of the task's type.
+             */
+            type_id: number;
+            /**
+             * Shot Ids
+             * @description Ids of the shots the task is placed on. Empty for a standalone task.
+             */
+            shot_ids: number[];
+            /** @description The user who created the task, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated the task, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * TaskStatusCreateIn
+         * @description Payload for `POST /api/v1/companies/<company_id>/task-statuses/`.
+         *
+         *     `order` left unset means this status is a side state, not part of
+         *     the primary ordered workflow. Setting `is_default=True`
+         *     automatically unsets the company's previous default.
+         */
+        TaskStatusCreateIn: {
+            /** Name */
+            name: string;
+            /** Color */
+            color: string;
+            /** Order */
+            order?: number | null;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+        };
+        /**
+         * TaskStatusListOut
+         * @description The full list of a company's task statuses (not paginated).
+         */
+        TaskStatusListOut: {
+            /** Items */
+            items: components["schemas"]["TaskStatusOut"][];
+        };
+        /**
+         * TaskStatusOut
+         * @description Public representation of a task status.
+         */
+        TaskStatusOut: {
+            /** Id */
+            id: number;
+            /** Company Id */
+            company_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Color
+             * @description Hex color, e.g. `#FF5733`.
+             */
+            color: string;
+            /**
+             * Order
+             * @description Sort position among the primary workflow statuses; null for side states (e.g. cancelled, on hold).
+             */
+            order: number | null;
+            /**
+             * Is Default
+             * @description Whether new shot tasks get this status when none is specified.
+             */
+            is_default: boolean;
+            /** @description The user who created the status, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated the status, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * TaskStatusUpdateIn
+         * @description Payload for `PATCH /api/v1/task-statuses/<id>/`. All fields optional.
+         */
+        TaskStatusUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Color */
+            color?: string | null;
+            /** Order */
+            order?: number | null;
+            /** Is Default */
+            is_default?: boolean | null;
+        };
+        /**
+         * TaskTypeCreateIn
+         * @description Payload for `POST /api/v1/companies/<company_id>/task-types/`.
+         */
+        TaskTypeCreateIn: {
+            /** Name */
+            name: string;
+            /**
+             * Abbreviation
+             * @description 2-5 uppercase Latin letters or digits. Unique within the company.
+             */
+            abbreviation: string;
+            /** Color */
+            color: string;
+        };
+        /**
+         * TaskTypeListOut
+         * @description The full list of a company's task types (not paginated).
+         */
+        TaskTypeListOut: {
+            /** Items */
+            items: components["schemas"]["TaskTypeOut"][];
+        };
+        /**
+         * TaskTypeOut
+         * @description Public representation of a task type.
+         */
+        TaskTypeOut: {
+            /** Id */
+            id: number;
+            /** Company Id */
+            company_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Abbreviation
+             * @description Prefix of the codes of tasks of this type, e.g. `CLN`.
+             */
+            abbreviation: string;
+            /**
+             * Color
+             * @description Hex color, e.g. `#FF5733`.
+             */
+            color: string;
+            /** @description The user who created the type, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            /** @description The user who last updated the type, or null if that user has since been deleted. */
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * TaskTypeUpdateIn
+         * @description Payload for `PATCH /api/v1/task-types/<id>/`. All fields optional.
+         *
+         *     Changing `abbreviation` doesn't touch the codes of existing tasks.
+         */
+        TaskTypeUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /** Color */
+            color?: string | null;
+        };
+        /**
+         * TaskUpdateIn
+         * @description Payload for `PATCH /api/v1/tasks/<id>/`. All fields optional.
+         *
+         *     Changing `type_id` doesn't change the task's `code`.
+         */
+        TaskUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /**
+             * Type Id
+             * @description Id of a task type of the project's company. Since `type` can't be null on a task, sending this as null is rejected - omit the field entirely to leave the type unchanged.
+             */
+            type_id?: number | null;
+        };
         /**
          * UserCreateIn
          * @description Payload for `POST /api/v1/users/`.
@@ -775,6 +2139,103 @@ export interface components {
              * @default false
              */
             remove_avatar: boolean;
+        };
+        /**
+         * VersionListOut
+         * @description A page of versions, newest first.
+         */
+        VersionListOut: {
+            /** Items */
+            items: components["schemas"]["VersionOut"][];
+            /**
+             * Total
+             * @description Total number of versions of the shot.
+             */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /**
+         * VersionOut
+         * @description Public representation of a version.
+         */
+        VersionOut: {
+            /** Id */
+            id: number;
+            /** Project Id */
+            project_id: number;
+            /** Shot Id */
+            shot_id: number;
+            /**
+             * Name
+             * @description Taken from the uploaded file's name without its extension. Unique within the project; can't be changed.
+             */
+            name: string;
+            /**
+             * Type
+             * @description `video` or `image`.
+             */
+            type: string;
+            /**
+             * Source
+             * @description Absolute URL of the original file.
+             */
+            source: string;
+            /**
+             * Converted
+             * @description Absolute URL of the browser-friendly rendition, or null if there is none yet. Clients should use it when present and fall back to `source`.
+             */
+            converted: string | null;
+            /**
+             * Thumb
+             * @description Absolute URL of a small JPG thumbnail, or null.
+             */
+            thumb: string | null;
+            /**
+             * Width
+             * @description In pixels.
+             */
+            width: number;
+            /**
+             * Height
+             * @description In pixels.
+             */
+            height: number;
+            /**
+             * Duration
+             * @description Length in frames. Null for images.
+             */
+            duration: number | null;
+            /**
+             * Fps
+             * @description Frames per second. Null for images.
+             */
+            fps: number | null;
+            /**
+             * Codec
+             * @description Video codec name (e.g. `h264`). Empty for images.
+             */
+            codec: string;
+            /**
+             * File Size
+             * @description Size of the source file, in bytes.
+             */
+            file_size: number;
+            /** @description The user who uploaded the version, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
     };
     responses: never;
@@ -956,6 +2417,782 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getChatlistcontrollerApiV1ShotsShotIdChat: {
+        parameters: {
+            query?: {
+                /** @description How many messages to return. */
+                limit?: number;
+                /** @description Return the `limit` messages older than the message with this id (to load earlier history). */
+                before?: number | null;
+                /** @description Return a window of at most `limit` messages around the message with this id, including it (to jump to a quoted message). Can't be combined with `before`. */
+                around?: number | null;
+            };
+            header?: never;
+            path: {
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A slice of the chat. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatListOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postChatlistcontrollerApiV1ShotsShotIdChat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created message. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postChatattachmentuploadcontrollerApiV1ShotsShotIdChatAttachments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Files accepted by `POST /api/v1/shots/<shot_id>/chat/attachments/`. */
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The uploaded attachment. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteChatattachmentdetailcontrollerApiV1ChatAttachmentsAttachmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getChatmessagedetailcontrollerApiV1ChatMessageId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested message. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteChatmessagedetailcontrollerApiV1ChatMessageId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchChatmessagedetailcontrollerApiV1ChatMessageId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated message. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    putChatreactioncontrollerApiV1ChatMessageIdReactions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactionIn"];
+            };
+        };
+        responses: {
+            /** @description All reactions of the message. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionsOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteChatreactioncontrollerApiV1ChatMessageIdReactions: {
+        parameters: {
+            query: {
+                /** @description The emoji to remove. */
+                emoji: string;
+            };
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All reactions of the message. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionsOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when provided `Accept` header cannot be satisfied */
@@ -1794,10 +4031,18 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Payload for `POST /api/v1/companies/<company_id>/projects/`. */
+        /**
+         * @description Payload for `POST /api/v1/companies/<company_id>/projects/`. Files accepted alongside a project create/update payload.
+         *
+         *     `cover` is optional: omit the field entirely to leave it untouched
+         *     (on update) or create the project without one (on create).
+         */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ProjectCreateIn"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    cover?: string;
+                } & components["schemas"]["ProjectCreateIn"];
             };
         };
         responses: {
@@ -2042,11 +4287,17 @@ export interface operations {
          * @description Payload for `PATCH /api/v1/projects/<id>/`. All fields are optional.
          *
          *     `code` is intentionally absent - it's immutable once the project is
-         *     created.
+         *     created. Files accepted alongside a project create/update payload.
+         *
+         *     `cover` is optional: omit the field entirely to leave it untouched
+         *     (on update) or create the project without one (on create).
          */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ProjectUpdateIn"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    cover?: string;
+                } & components["schemas"]["ProjectUpdateIn"];
             };
         };
         responses: {
@@ -2423,6 +4674,3127 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShotgrouplistcontrollerApiV1ProjectsProjectIdShotGroups: {
+        parameters: {
+            query?: {
+                /** @description 1-indexed page number. */
+                page?: number;
+                /** @description Number of shot groups per page. */
+                page_size?: number;
+                /** @description Case-insensitive match against the shot group name. */
+                search?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's shot groups collection. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of shot groups. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotGroupListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postShotgrouplistcontrollerApiV1ProjectsProjectIdShotGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's shot groups collection. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/projects/<project_id>/shot-groups/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotGroupCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created shot group. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotGroupOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShotgroupdetailcontrollerApiV1ShotGroupsShotGroupId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot group. */
+                shot_group_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested shot group. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotGroupOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteShotgroupdetailcontrollerApiV1ShotGroupsShotGroupId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot group. */
+                shot_group_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchShotgroupdetailcontrollerApiV1ShotGroupsShotGroupId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot group. */
+                shot_group_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `PATCH /api/v1/shot-groups/<id>/`.
+         *
+         *     `name` is the only field there is, so unlike `ProjectUpdateIn` this
+         *     isn't a partial-update schema - it's always required.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotGroupUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated shot group. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotGroupOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShotstatuslistcontrollerApiV1CompaniesCompanyIdShotStatuses: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive match against the status name. */
+                search?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's shot statuses collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The company's shot statuses. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotStatusListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postShotstatuslistcontrollerApiV1CompaniesCompanyIdShotStatuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's shot statuses collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `POST /api/v1/companies/<company_id>/shot-statuses/`.
+         *
+         *     `order` left unset means this status is an exception/side state,
+         *     not part of the primary ordered workflow - see `ShotStatus.order`.
+         *     Setting `is_default=True` automatically unsets the company's
+         *     previous default (there's always at most one).
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotStatusCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created shot status. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotStatusOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShotstatusdetailcontrollerApiV1ShotStatusesShotStatusId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot status. */
+                shot_status_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested shot status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotStatusOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteShotstatusdetailcontrollerApiV1ShotStatusesShotStatusId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot status. */
+                shot_status_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchShotstatusdetailcontrollerApiV1ShotStatusesShotStatusId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot status. */
+                shot_status_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `PATCH /api/v1/shot-statuses/<id>/`. All fields optional. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotStatusUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated shot status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotStatusOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShotlistcontrollerApiV1ProjectsProjectIdShots: {
+        parameters: {
+            query?: {
+                /** @description 1-indexed page number. */
+                page?: number;
+                /** @description Number of shots per page. */
+                page_size?: number;
+                /** @description Case-insensitive match against the shot name. */
+                search?: string | null;
+                /** @description Only shots that have at least one task of the task type with this id. */
+                task_type?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's shots collection. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of shots. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postShotlistcontrollerApiV1ProjectsProjectIdShots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's shots collection. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `POST /api/v1/projects/<project_id>/shots/`.
+         *
+         *     This is the only place a shot is created - there's no corresponding
+         *     create on the shot-group-scoped collection, to avoid two routes with
+         *     subtly different creation semantics.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created shot. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShotgroupshotlistcontrollerApiV1ShotGroupsShotGroupIdShots: {
+        parameters: {
+            query?: {
+                /** @description 1-indexed page number. */
+                page?: number;
+                /** @description Number of shots per page. */
+                page_size?: number;
+                /** @description Case-insensitive match against the shot name. */
+                search?: string | null;
+                /** @description Only shots that have at least one task of the task type with this id. */
+                task_type?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a shot group's shots collection. */
+                shot_group_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of shots. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShotdetailcontrollerApiV1ShotsShotId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot. */
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested shot. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteShotdetailcontrollerApiV1ShotsShotId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot. */
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchShotdetailcontrollerApiV1ShotsShotId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot. */
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `PATCH /api/v1/shots/<id>/`. All fields are optional.
+         *
+         *     `name` is intentionally absent - like `Project.code`, it's immutable
+         *     once the shot is created. `group_ids`, when present, *replaces* the
+         *     full set of group memberships (it's not a merge/add) - send the
+         *     complete desired list.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated shot. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTasktypelistcontrollerApiV1CompaniesCompanyIdTaskTypes: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive match against the name or abbreviation. */
+                search?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's task types collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The company's task types. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskTypeListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postTasktypelistcontrollerApiV1CompaniesCompanyIdTaskTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's task types collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/companies/<company_id>/task-types/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskTypeCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created task type. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskTypeOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTasktypedetailcontrollerApiV1TaskTypesTaskTypeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task type. */
+                task_type_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested task type. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskTypeOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteTasktypedetailcontrollerApiV1TaskTypesTaskTypeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task type. */
+                task_type_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchTasktypedetailcontrollerApiV1TaskTypesTaskTypeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task type. */
+                task_type_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `PATCH /api/v1/task-types/<id>/`. All fields optional.
+         *
+         *     Changing `abbreviation` doesn't touch the codes of existing tasks.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskTypeUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated task type. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskTypeOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTaskstatuslistcontrollerApiV1CompaniesCompanyIdTaskStatuses: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive match against the status name. */
+                search?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's task statuses collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The company's task statuses. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskStatusListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postTaskstatuslistcontrollerApiV1CompaniesCompanyIdTaskStatuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a company's task statuses collection. */
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `POST /api/v1/companies/<company_id>/task-statuses/`.
+         *
+         *     `order` left unset means this status is a side state, not part of
+         *     the primary ordered workflow. Setting `is_default=True`
+         *     automatically unsets the company's previous default.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskStatusCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created task status. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskStatusOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTaskstatusdetailcontrollerApiV1TaskStatusesTaskStatusId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task status. */
+                task_status_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested task status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskStatusOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteTaskstatusdetailcontrollerApiV1TaskStatusesTaskStatusId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task status. */
+                task_status_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchTaskstatusdetailcontrollerApiV1TaskStatusesTaskStatusId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task status. */
+                task_status_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `PATCH /api/v1/task-statuses/<id>/`. All fields optional. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskStatusUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated task status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskStatusOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTasklistcontrollerApiV1ProjectsProjectIdTasks: {
+        parameters: {
+            query?: {
+                /** @description 1-indexed page number. */
+                page?: number;
+                /** @description Number of tasks per page. */
+                page_size?: number;
+                /** @description Case-insensitive match against the task name or code. */
+                search?: string | null;
+                /** @description Only tasks of the task type with this id. */
+                type?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's tasks collection. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of tasks. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postTasklistcontrollerApiV1ProjectsProjectIdTasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's tasks collection. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `POST /api/v1/projects/<project_id>/tasks/`.
+         *
+         *     The task starts out standalone; place it on shots with
+         *     `POST /api/v1/shots/<id>/tasks/`.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created task. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTaskdetailcontrollerApiV1TasksTaskId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task. */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested task. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteTaskdetailcontrollerApiV1TasksTaskId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task. */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchTaskdetailcontrollerApiV1TasksTaskId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single task. */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `PATCH /api/v1/tasks/<id>/`. All fields optional.
+         *
+         *     Changing `type_id` doesn't change the task's `code`.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated task. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShottasklistcontrollerApiV1ShotsShotIdTasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a shot's tasks collection. */
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The shot's tasks. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotTaskListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postShottasklistcontrollerApiV1ShotsShotIdTasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a shot's tasks collection. */
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/shots/<shot_id>/tasks/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotTaskCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created shot task. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotTaskOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getShottaskdetailcontrollerApiV1ShotTasksShotTaskId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot task. */
+                shot_task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested shot task. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotTaskOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteShottaskdetailcontrollerApiV1ShotTasksShotTaskId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot task. */
+                shot_task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchShottaskdetailcontrollerApiV1ShotTasksShotTaskId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single shot task. */
+                shot_task_id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Payload for `PATCH /api/v1/shot-tasks/<id>/`. All fields optional.
+         *
+         *     The task and the shot can't be changed; delete the shot task and
+         *     create a new one instead.
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotTaskUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated shot task. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotTaskOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -2881,6 +8253,365 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getVersionlistcontrollerApiV1ShotsShotIdVersions: {
+        parameters: {
+            query?: {
+                /** @description 1-indexed page number. */
+                page?: number;
+                /** @description Number of versions per page. */
+                page_size?: number;
+                /** @description Case-insensitive match against the version name. */
+                search?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a shot's versions collection. */
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of versions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postVersionlistcontrollerApiV1ShotsShotIdVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a shot's versions collection. */
+                shot_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Files accepted by `POST /api/v1/shots/<shot_id>/versions/`. */
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    source: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The created version. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getVersiondetailcontrollerApiV1VersionsVersionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single version. */
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested version. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteVersiondetailcontrollerApiV1VersionsVersionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a single version. */
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
