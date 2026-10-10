@@ -38,7 +38,7 @@ class VersionFactory(DjangoModelFactory):
     type = Version.Type.IMAGE
     source = factory.LazyAttribute(lambda o: ContentFile(_JPEG, name=f"{o.name}.jpg"))
     thumb = factory.LazyAttribute(
-        lambda o: ContentFile(_JPEG, name=f"{o.name}_thumb.jpg")
+        lambda o: ContentFile(_JPEG, name=f"{o.name}.jpg_thumb.jpg")
     )
     width = 64
     height = 48

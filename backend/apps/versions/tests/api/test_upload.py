@@ -1,9 +1,11 @@
 from http import HTTPStatus
 import os
+import re
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
+from apps.core.storage import sanitize_name
 from apps.versions.api.views import VersionListController
 from apps.versions.models import Version
 from apps.versions.tests.conftest import make_jpeg, make_png
@@ -69,6 +71,26 @@ class TestUploadVideo:
         assert storage.exists(version.source.name)
         assert storage.exists(version.thumb.name)
         assert version.updated_by is not None
+
+    def test_files_are_stored_in_one_folder_inside_the_shot_folder(
+        self, auth_client, member_shot, h264_video_bytes
+    ):
+        _upload(auth_client, member_shot, "PRJ_0060_v01.mp4", h264_video_bytes)
+
+        version = Version.objects.get()
+        project = member_shot.project
+        folder = (
+            rf"{project.company.storage_token}/{project.code}/shots/"
+            rf"{sanitize_name(member_shot.name)}/versions/PRJ_0060_v01-[a-z0-9]{{8}}"
+        )
+        assert re.fullmatch(rf"{folder}/PRJ_0060_v01\.mp4", version.source.name)
+        assert re.fullmatch(
+            rf"{folder}/PRJ_0060_v01\.mp4_thumb\.jpg", version.thumb.name
+        )
+        assert (
+            version.source.name.rpartition("/")[0]
+            == (version.thumb.name.rpartition("/")[0])
+        )
 
     def test_thumb_frame_position_comes_from_settings(
         self, auth_client, member_shot, h264_video_bytes, settings

@@ -18,6 +18,7 @@ from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
+from apps.core.storage import delete_stored_file
 from apps.users.models import User
 
 from .schemas import (
@@ -82,7 +83,7 @@ def _apply_avatar(user: User, files: UserAvatarFiles, request) -> None:
     user.save(update_fields=["avatar"])
 
     if old_name:
-        old_storage.delete(old_name)
+        delete_stored_file(old_storage, old_name)
 
 
 def _clear_avatar(user: User) -> None:
@@ -94,7 +95,7 @@ def _clear_avatar(user: User) -> None:
     user.save(update_fields=["avatar"])
 
     if old_name:
-        old_storage.delete(old_name)
+        delete_stored_file(old_storage, old_name)
 
 
 class MeController(Controller[PydanticFastSerializer]):

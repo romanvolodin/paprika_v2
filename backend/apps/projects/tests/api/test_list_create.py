@@ -1,4 +1,5 @@
 from http import HTTPStatus
+import re
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
@@ -175,7 +176,10 @@ class TestCreateProject:
 
         assert response.status_code == HTTPStatus.CREATED
         assert response.json()["cover"] is not None
-        assert response.json()["cover"].endswith("cover.png")
+        assert re.search(
+            rf"/media/{company.storage_token}/PRJ/cover-[a-z0-9]{{8}}\.png$",
+            response.json()["cover"],
+        )
 
     def test_rejects_duplicate_code_within_company(
         self,

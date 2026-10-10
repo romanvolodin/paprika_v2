@@ -25,6 +25,8 @@
 
 	handle @media {
 		root * /var/lib/paprika
+		header Referrer-Policy "no-referrer"
+		header X-Robots-Tag "noindex"
 		file_server
 	}
 

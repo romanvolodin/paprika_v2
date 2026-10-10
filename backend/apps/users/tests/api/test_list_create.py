@@ -1,4 +1,5 @@
 from http import HTTPStatus
+import re
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
@@ -140,7 +141,11 @@ class TestCreateUser:
 
         assert response.status_code == HTTPStatus.CREATED
         assert response.json()["avatar"] is not None
-        assert response.json()["avatar"].endswith("avatar.png")
+        created = User.objects.get(email="withavatar@example.com")
+        assert re.search(
+            rf"/media/users/{created.id}/avatar/avatar-[a-z0-9]{{8}}\.png$",
+            response.json()["avatar"],
+        )
 
     def test_rejects_duplicate_email(self, auth_client, user_factory):
         existing = user_factory(email="taken@example.com")

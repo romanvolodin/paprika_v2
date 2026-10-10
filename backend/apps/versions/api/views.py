@@ -20,6 +20,7 @@ from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
 from apps.chat.events import record_version_uploaded
+from apps.core.storage import delete_stored_file
 from apps.projects.models import Project
 from apps.projects.permissions import require_can_write
 from apps.shots.api.views import _get_shot_or_404
@@ -96,7 +97,7 @@ def _discard_files(version: Version) -> None:
     """Delete a never-committed version's files from storage."""
     for field in (version.source, version.converted, version.thumb):
         if field and field.name:
-            field.storage.delete(field.name)
+            delete_stored_file(field.storage, field.name)
 
 
 class VersionListController(Controller[PydanticSerializer]):
@@ -214,7 +215,7 @@ class VersionListController(Controller[PydanticSerializer]):
             name=base_name,
             type=info.type,
             source=upload,
-            thumb=ContentFile(processed.thumb, name=f"{base_name}.jpg"),
+            thumb=ContentFile(processed.thumb, name=f"{upload.name}_thumb.jpg"),
             width=info.width,
             height=info.height,
             duration=info.duration,

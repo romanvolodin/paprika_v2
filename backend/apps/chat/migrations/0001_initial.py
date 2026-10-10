@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated at')),
-                ('file', models.FileField(upload_to=apps.chat.models.chat_attachment_upload_to, verbose_name='file')),
+                ('file', models.FileField(max_length=512, upload_to=apps.chat.models.chat_attachment_upload_to, verbose_name='file')),
                 ('filename', models.CharField(max_length=255, verbose_name='file name')),
                 ('size', models.PositiveBigIntegerField(help_text='In bytes.', verbose_name='size')),
                 ('content_type', models.CharField(blank=True, max_length=255, verbose_name='content type')),

@@ -4,8 +4,25 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.storage import USERS_DIR, file_with_token
+
 from .managers import UserManager
 from .validators import AVATAR_ALLOWED_EXTENSIONS, validate_avatar_size
+
+
+def user_avatar_upload_to(instance, filename: str) -> str:
+    """`users/<user id>/avatar/<name>-<token>.<ext>`.
+
+    The uploaded file's name is kept, with a random token before the
+    extension. The token also makes a new avatar's URL differ from the old
+    one, so browsers don't keep showing the replaced image from their cache.
+
+    A user that isn't saved yet has no id (this happens when an avatar is
+    attached in the admin while creating the account); such a file goes to
+    `users/new/` instead.
+    """
+    owner = instance.pk or "new"
+    return f"{USERS_DIR}/{owner}/avatar/{file_with_token(filename)}"
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -21,7 +38,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(_("last name"), max_length=150)
     avatar = models.ImageField(
         _("avatar"),
-        upload_to="avatars",
+        upload_to=user_avatar_upload_to,
+        max_length=255,
         blank=True,
         validators=[
             FileExtensionValidator(allowed_extensions=AVATAR_ALLOWED_EXTENSIONS),

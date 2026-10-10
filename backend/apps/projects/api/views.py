@@ -18,6 +18,7 @@ from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
 from apps.companies.models import Company
+from apps.core.storage import delete_stored_file
 from apps.projects.models import Project, ProjectMembership
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
@@ -79,7 +80,7 @@ def _apply_cover(project: Project, files: ProjectCoverFiles, request) -> None:
     project.save(update_fields=["cover"])
 
     if old_name:
-        old_storage.delete(old_name)
+        delete_stored_file(old_storage, old_name)
 
 
 def _clear_cover(project: Project) -> None:
@@ -91,7 +92,7 @@ def _clear_cover(project: Project) -> None:
     project.save(update_fields=["cover"])
 
     if old_name:
-        old_storage.delete(old_name)
+        delete_stored_file(old_storage, old_name)
 
 
 def _serialize_member(request, membership: ProjectMembership) -> ProjectMemberOut:

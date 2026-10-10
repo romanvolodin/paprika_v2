@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.companies.models import Company, CompanyMembership
 from apps.core.models import BaseModel
+from apps.core.storage import file_with_token, project_dir
 
 from .validators import COVER_ALLOWED_EXTENSIONS, validate_cover_size
 
@@ -12,6 +13,16 @@ code_validator = RegexValidator(
     regex=r"^[A-Za-z0-9_-]+$",
     message=_("Code may only contain letters, numbers, hyphens and underscores."),
 )
+
+
+def project_cover_upload_to(instance, filename: str) -> str:
+    """`<company token>/<PROJECT>/<name>-<token>.<ext>`.
+
+    The uploaded file's name is kept, with a random token before the
+    extension. The token also makes a new cover's URL differ from the old
+    one, so browsers don't keep showing the replaced image from their cache.
+    """
+    return f"{project_dir(instance)}/{file_with_token(filename)}"
 
 
 class Project(BaseModel):
@@ -36,7 +47,8 @@ class Project(BaseModel):
     description = models.TextField(_("description"), blank=True)
     cover = models.ImageField(
         _("cover"),
-        upload_to="project_covers",
+        upload_to=project_cover_upload_to,
+        max_length=255,
         blank=True,
         validators=[
             FileExtensionValidator(allowed_extensions=COVER_ALLOWED_EXTENSIONS),

@@ -1,6 +1,7 @@
-from django.db import transaction
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+
+from apps.core.storage import delete_on_commit
 
 from .models import Version
 
@@ -14,14 +15,4 @@ def delete_version_files(sender, instance, **kwargs):
     and those would otherwise leave orphaned files behind. Runs on
     commit so a rolled-back delete doesn't lose the files.
     """
-    files = [
-        (field.storage, field.name)
-        for field in (instance.source, instance.converted, instance.thumb)
-        if field and field.name
-    ]
-
-    def _delete():
-        for storage, name in files:
-            storage.delete(name)
-
-    transaction.on_commit(_delete)
+    delete_on_commit(instance.source, instance.converted, instance.thumb)

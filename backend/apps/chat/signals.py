@@ -1,6 +1,7 @@
-from django.db import transaction
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+
+from apps.core.storage import delete_on_commit
 
 from .models import Attachment
 
@@ -14,8 +15,4 @@ def delete_attachment_file(sender, instance, **kwargs):
     a message is deleted. Runs on commit so a rolled-back delete doesn't
     lose the file.
     """
-    field = instance.file
-    if not (field and field.name):
-        return
-    storage, name = field.storage, field.name
-    transaction.on_commit(lambda: storage.delete(name))
+    delete_on_commit(instance.file)

@@ -1,22 +1,15 @@
-import uuid
-
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BaseModel
+from apps.core.storage import file_with_token, shot_dir, upload_date
 from apps.shots.models import Shot
 from apps.versions.models import Version
 
 
 def chat_attachment_upload_to(instance, filename: str) -> str:
-    """Store every attachment under its own random directory.
-
-    Same idea as `apps.versions.models.version_upload_to`: the original
-    file name is kept, the random directory makes the URL unguessable
-    (`/media/` is served without any authorization).
-    """
-    return f"chat/{uuid.uuid4().hex}/{filename}"
+    return f"{shot_dir(instance.shot)}/chat/{upload_date()}/{file_with_token(filename)}"
 
 
 class Message(BaseModel):
@@ -155,7 +148,9 @@ class Attachment(BaseModel):
         on_delete=models.CASCADE,
         related_name="attachments",
     )
-    file = models.FileField(_("file"), upload_to=chat_attachment_upload_to)
+    file = models.FileField(
+        _("file"), upload_to=chat_attachment_upload_to, max_length=512
+    )
     filename = models.CharField(_("file name"), max_length=255)
     size = models.PositiveBigIntegerField(_("size"), help_text=_("In bytes."))
     content_type = models.CharField(_("content type"), max_length=255, blank=True)

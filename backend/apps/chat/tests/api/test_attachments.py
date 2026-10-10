@@ -1,5 +1,6 @@
 from http import HTTPStatus
 import os
+import re
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
@@ -42,8 +43,10 @@ class TestUploadAttachment:
         assert body["size"] == 5
         assert body["content_type"] == "text/plain"
         assert "/chat/" in body["url"]
-        assert body["url"].endswith("/%D0%B7%D0%B0%D0%BC%D0%B5%D1%82%D0%BA%D0%B8.txt")
         attachment = Attachment.objects.get(pk=body["id"])
+        assert re.search(
+            r"/chat/\d{4}-\d{2}-\d{2}/заметки-[a-z0-9]{8}\.txt$", attachment.file.name
+        )
         assert attachment.shot == member_shot
         assert attachment.message is None
         assert attachment.created_by == auth_user
@@ -61,7 +64,7 @@ class TestUploadAttachment:
         second = _upload(auth_client, member_shot, "same.txt").json()
 
         assert first["url"] != second["url"]
-        assert first["url"].endswith("/same.txt")
+        assert re.search(r"/same-[a-z0-9]{8}\.txt$", first["url"])
 
     def test_a_path_in_the_name_is_dropped(self, auth_client, member_shot):
         response = _upload(auth_client, member_shot, "../../etc/passwd")

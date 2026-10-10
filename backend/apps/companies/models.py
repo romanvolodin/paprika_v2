@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BaseModel
+from apps.core.storage import TOKEN_LENGTH, make_token
 
 
 class Company(BaseModel):
@@ -13,6 +14,18 @@ class Company(BaseModel):
 
     name = models.CharField(_("name"), max_length=255)
     slug = models.SlugField(_("slug"), max_length=255, unique=True, blank=True)
+    storage_token = models.CharField(
+        _("storage token"),
+        max_length=TOKEN_LENGTH,
+        unique=True,
+        editable=False,
+        default=make_token,
+        help_text=_(
+            "Name of the company's folder in the media storage. Random, "
+            "set once at creation and never changed, so the company's real "
+            "name doesn't show up in file URLs."
+        ),
+    )
 
     class Meta:
         verbose_name = _("company")

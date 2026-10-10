@@ -1,23 +1,46 @@
-import uuid
+import posixpath
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BaseModel
+from apps.core.storage import dir_with_token, sanitize_filename, shot_dir
 from apps.projects.models import Project
 from apps.shots.models import Shot
 
 
 def version_upload_to(instance, filename: str) -> str:
-    """Store every file of a version under its own random directory.
+    """Where the uploaded `source` file goes.
+
+    `<company token>/<PROJECT>/shots/<SHOT>/versions/<VERSION>-<token>/<file>`.
 
     The original file name is kept (people download originals and expect
-    to recognise them), while the random directory makes the URL
-    unguessable - `/media/` is served by Caddy without any authorization,
-    so the path itself is the only thing keeping other people's versions
-    private.
+    to recognise them), while the random token in the folder name makes
+    the URL unguessable - `/media/` is served by Caddy without any
+    authorization, so the path itself is the only thing keeping other
+    people's versions private.
     """
-    return f"versions/{uuid.uuid4().hex}/{filename}"
+    version_dir = f"{shot_dir(instance.shot)}/versions/{dir_with_token(instance.name)}"
+    return f"{version_dir}/{sanitize_filename(filename)}"
+
+
+def version_derived_upload_to(instance, filename: str) -> str:
+    """Where files made from the source (`converted`, `thumb`) go.
+
+    Right next to the source, so a version is one self-contained folder.
+    Name them after the source file, e.g. `PRJ_0010_v01.mov_thumb.jpg`, so
+    it's clear what each was made from.
+
+    Relies on `source` being saved before the fields below it (Django
+    saves file fields in the order they are declared on the model).
+    """
+    version_dir = posixpath.dirname(instance.source.name) if instance.source else ""
+    if not version_dir:
+        # The source isn't stored yet - give the files a folder of their own.
+        version_dir = (
+            f"{shot_dir(instance.shot)}/versions/{dir_with_token(instance.name)}"
+        )
+    return f"{version_dir}/{sanitize_filename(filename)}"
 
 
 class Version(BaseModel):
@@ -68,11 +91,18 @@ class Version(BaseModel):
     name = models.CharField(_("name"), max_length=255)
     type = models.CharField(_("type"), max_length=10, choices=Type.choices)
 
-    source = models.FileField(_("source file"), upload_to=version_upload_to)
-    converted = models.FileField(
-        _("converted file"), upload_to=version_upload_to, blank=True
+    source = models.FileField(
+        _("source file"), upload_to=version_upload_to, max_length=512
     )
-    thumb = models.FileField(_("thumbnail"), upload_to=version_upload_to, blank=True)
+    converted = models.FileField(
+        _("converted file"),
+        upload_to=version_derived_upload_to,
+        blank=True,
+        max_length=512,
+    )
+    thumb = models.FileField(
+        _("thumbnail"), upload_to=version_derived_upload_to, blank=True, max_length=512
+    )
 
     width = models.PositiveIntegerField(_("width"), help_text=_("In pixels."))
     height = models.PositiveIntegerField(_("height"), help_text=_("In pixels."))
