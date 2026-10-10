@@ -13,6 +13,11 @@ import tempfile
 from django.test.client import BOUNDARY, encode_multipart
 import pytest
 
+from apps.chat.tests.factories import (
+    AttachmentFactory,
+    MessageFactory,
+    ReactionFactory,
+)
 from apps.companies.tests.factories import CompanyFactory, CompanyMembershipFactory
 from apps.projects.tests.factories import ProjectFactory, ProjectMembershipFactory
 from apps.shots.tests.factories import ShotFactory, ShotGroupFactory, ShotStatusFactory
@@ -222,6 +227,24 @@ def version_factory():
 def version(version_factory):
     """A single saved image version with default field values."""
     return version_factory()
+
+
+@pytest.fixture
+def message_factory():
+    """The `MessageFactory` class itself, e.g. `message_factory(shot=...)`."""
+    return MessageFactory
+
+
+@pytest.fixture
+def attachment_factory():
+    """The `AttachmentFactory` class itself, e.g. `attachment_factory(shot=...)`."""
+    return AttachmentFactory
+
+
+@pytest.fixture
+def reaction_factory():
+    """The `ReactionFactory` class itself, e.g. `reaction_factory(message=...)`."""
+    return ReactionFactory
 
 
 @pytest.fixture

@@ -19,6 +19,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
+from apps.chat.events import record_version_uploaded
 from apps.projects.models import Project
 from apps.projects.permissions import require_can_write
 from apps.shots.api.views import _get_shot_or_404
@@ -226,6 +227,7 @@ class VersionListController(Controller[PydanticSerializer]):
         try:
             with transaction.atomic():
                 version.save(force_insert=True)
+                record_version_uploaded(version, self.request.user)
         except IntegrityError as exc:
             # Lost a race with a concurrent upload of the same name: the
             # files were already written, so clean them up.

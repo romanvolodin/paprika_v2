@@ -7,6 +7,7 @@ from dmr.openapi.views import OpenAPIJsonView, ScalarView
 from dmr.routing import Router
 
 from apps.auth.api.urls import router as auth_router
+from apps.chat.api.urls import router as chat_router
 from apps.companies.api.urls import router as companies_router
 from apps.projects.api.urls import router as projects_router
 from apps.shots.api.urls import router as shots_router
@@ -17,6 +18,7 @@ from apps.versions.api.urls import router as versions_router
 
 api_router = Router("api/v1/")
 api_router.include(auth_router)
+api_router.include(chat_router)
 api_router.include(companies_router)
 api_router.include(projects_router)
 api_router.include(shots_router)

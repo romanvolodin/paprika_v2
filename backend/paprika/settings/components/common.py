@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "dmr.security.jwt.blocklist",
     #
     "apps.core",
+    "apps.chat",
     "apps.companies",
     "apps.projects",
     "apps.shots",
@@ -113,5 +114,17 @@ VERSION_THUMB_FRAME_POSITION = env.float(
 )
 # Longest side of a generated thumbnail, in pixels.
 VERSION_THUMB_MAX_SIZE = 320
+
+# Chat (see `apps.chat`). Plain environment variables, like the versions
+# ones above.
+#
+# Max length of a chat message's text, in characters.
+CHAT_MESSAGE_MAX_LENGTH = env.int("PAPRIKA_CHAT_MESSAGE_MAX_LENGTH", 2000)
+# Max size of a single chat attachment, in megabytes.
+CHAT_ATTACHMENT_MAX_FILE_SIZE_MB = env.int(
+    "PAPRIKA_CHAT_ATTACHMENT_MAX_FILE_SIZE_MB", 100
+)
+# Max number of attachments in a single message.
+CHAT_MESSAGE_MAX_ATTACHMENTS = 10
 
 AUTH_USER_MODEL = "users.User"

@@ -9,6 +9,11 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
+from apps.chat.events import (
+    record_assignee_changed,
+    record_status_changed,
+    record_task_added,
+)
 from apps.companies.models import Company
 from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project, ProjectMembership
@@ -942,6 +947,7 @@ class ShotTaskListController(Controller[PydanticSerializer]):
                     created_by=self.request.user,
                     updated_by=self.request.user,
                 )
+                record_task_added(shot_task, self.request.user)
         except IntegrityError as exc:
             if _SHOT_TASK_UNIQUE_CONSTRAINT not in str(exc):
                 raise
@@ -1006,6 +1012,9 @@ class ShotTaskDetailController(Controller[PydanticSerializer]):
         require_can_write(self.request.user, project)
         _reject_explicit_nulls(self, parsed_body, ["status_id"])
 
+        old_status = shot_task.status
+        old_assignee = shot_task.assignee
+
         update_fields = parsed_body.model_dump(
             exclude={"status_id", "assignee_id"}, exclude_unset=True
         )
@@ -1028,7 +1037,14 @@ class ShotTaskDetailController(Controller[PydanticSerializer]):
 
         if update_fields:
             shot_task.updated_by = self.request.user
-            shot_task.save(update_fields=[*update_fields, "updated_by"])
+            # The chat events are saved together with the change.
+            with transaction.atomic():
+                shot_task.save(update_fields=[*update_fields, "updated_by"])
+                if shot_task.status_id != old_status.id:
+                    record_status_changed(shot_task, old_status, self.request.user)
+                old_assignee_id = old_assignee.id if old_assignee else None
+                if shot_task.assignee_id != old_assignee_id:
+                    record_assignee_changed(shot_task, old_assignee, self.request.user)
 
         return _serialize_shot_task(self.request, shot_task)
 
